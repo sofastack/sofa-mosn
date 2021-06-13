@@ -42,6 +42,7 @@ func init() {
 	// default admin api
 	apiHandleFuncStore = map[string]func(http.ResponseWriter, *http.Request){
 		"/api/v1/config_dump":     configDump,
+		"/config_dump":            envoyConfigDump,
 		"/api/v1/stats":           statsDump,
 		"/api/v1/stats_glob":      statsDumpProxyTotal,
 		"/api/v1/update_loglevel": updateLogLevel,

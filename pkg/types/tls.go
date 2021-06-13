@@ -22,8 +22,10 @@ import (
 	"fmt"
 	"net"
 
-	auth "github.com/envoyproxy/go-control-plane/envoy/api/v2/auth"
-	core "github.com/envoyproxy/go-control-plane/envoy/api/v2/core"
+	envoy_api_v2_auth "github.com/envoyproxy/go-control-plane/envoy/api/v2/auth"
+	envoy_api_v2_core "github.com/envoyproxy/go-control-plane/envoy/api/v2/core"
+	envoy_config_core_v3 "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
+	envoy_extensions_transport_sockets_tls_v3 "github.com/envoyproxy/go-control-plane/envoy/extensions/transport_sockets/tls/v3"
 	"mosn.io/mosn/pkg/mtls/crypto/tls"
 )
 
@@ -124,27 +126,58 @@ type SdsSecret struct {
 
 type SdsUpdateCallbackFunc func(name string, secret *SdsSecret)
 
-type SdsClient interface {
-	AddUpdateCallback(sdsConfig *auth.SdsSecretConfig, callback SdsUpdateCallbackFunc) error
-	DeleteUpdateCallback(sdsConfig *auth.SdsSecretConfig) error
-	SecretProvider
+type SdsClientV3 interface {
+	AddUpdateCallback(sdsConfig *envoy_extensions_transport_sockets_tls_v3.SdsSecretConfig, callback SdsUpdateCallbackFunc) error
+	DeleteUpdateCallback(sdsConfig *envoy_extensions_transport_sockets_tls_v3.SdsSecretConfig) error
+	SecretProviderV3
 }
 
-type SecretProvider interface {
-	SetSecret(name string, secret *auth.Secret)
+type SecretProviderV3 interface {
+	SetSecret(name string, secret *envoy_extensions_transport_sockets_tls_v3.Secret)
 }
 
-func SecretConvert(raw *auth.Secret) *SdsSecret {
+func SecretConvertV3(raw *envoy_extensions_transport_sockets_tls_v3.Secret) *SdsSecret {
 	secret := &SdsSecret{
 		Name: raw.Name,
 	}
-	if validateSecret, ok := raw.Type.(*auth.Secret_ValidationContext); ok {
-		ds := validateSecret.ValidationContext.TrustedCa.Specifier.(*core.DataSource_InlineBytes)
+	if validateSecret, ok := raw.Type.(*envoy_extensions_transport_sockets_tls_v3.Secret_ValidationContext); ok {
+		ds := validateSecret.ValidationContext.TrustedCa.Specifier.(*envoy_config_core_v3.DataSource_InlineBytes)
 		secret.ValidationPEM = string(ds.InlineBytes)
 	}
-	if tlsCert, ok := raw.Type.(*auth.Secret_TlsCertificate); ok {
-		certSpec, _ := tlsCert.TlsCertificate.CertificateChain.Specifier.(*core.DataSource_InlineBytes)
-		priKey, _ := tlsCert.TlsCertificate.PrivateKey.Specifier.(*core.DataSource_InlineBytes)
+	if tlsCert, ok := raw.Type.(*envoy_extensions_transport_sockets_tls_v3.Secret_TlsCertificate); ok {
+		certSpec, _ := tlsCert.TlsCertificate.CertificateChain.Specifier.(*envoy_config_core_v3.DataSource_InlineBytes)
+		priKey, _ := tlsCert.TlsCertificate.PrivateKey.Specifier.(*envoy_config_core_v3.DataSource_InlineBytes)
+		secret.CertificatePEM = string(certSpec.InlineBytes)
+		secret.PrivateKeyPEM = string(priKey.InlineBytes)
+	}
+	return secret
+}
+
+//////
+///// Deprecated with xDS v2
+/////
+
+type SdsClientV2 interface {
+	AddUpdateCallback(sdsConfig *envoy_api_v2_auth.SdsSecretConfig, callback SdsUpdateCallbackFunc) error
+	DeleteUpdateCallback(sdsConfig *envoy_api_v2_auth.SdsSecretConfig) error
+	SecretProviderV2
+}
+
+type SecretProviderV2 interface {
+	SetSecret(name string, secret *envoy_api_v2_auth.Secret)
+}
+
+func SecretConvertV2(raw *envoy_api_v2_auth.Secret) *SdsSecret {
+	secret := &SdsSecret{
+		Name: raw.Name,
+	}
+	if validateSecret, ok := raw.Type.(*envoy_api_v2_auth.Secret_ValidationContext); ok {
+		ds := validateSecret.ValidationContext.TrustedCa.Specifier.(*envoy_api_v2_core.DataSource_InlineBytes)
+		secret.ValidationPEM = string(ds.InlineBytes)
+	}
+	if tlsCert, ok := raw.Type.(*envoy_api_v2_auth.Secret_TlsCertificate); ok {
+		certSpec, _ := tlsCert.TlsCertificate.CertificateChain.Specifier.(*envoy_api_v2_core.DataSource_InlineBytes)
+		priKey, _ := tlsCert.TlsCertificate.PrivateKey.Specifier.(*envoy_api_v2_core.DataSource_InlineBytes)
 		secret.CertificatePEM = string(certSpec.InlineBytes)
 		secret.PrivateKeyPEM = string(priKey.InlineBytes)
 	}

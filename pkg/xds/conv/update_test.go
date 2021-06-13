@@ -29,6 +29,7 @@ import (
 	xdshttp "github.com/envoyproxy/go-control-plane/envoy/config/filter/network/http_connection_manager/v2"
 	xdstcp "github.com/envoyproxy/go-control-plane/envoy/config/filter/network/tcp_proxy/v2"
 	xdsutil "github.com/envoyproxy/go-control-plane/pkg/conversion"
+	"github.com/envoyproxy/go-control-plane/pkg/wellknown"
 	xdswellknown "github.com/envoyproxy/go-control-plane/pkg/wellknown"
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes/duration"
@@ -206,17 +207,17 @@ func Test_updateListener(t *testing.T) {
 		//		Config: accessLogFilterConfig,
 		//	},
 		//}},
-		UseRemoteAddress:                           NewBoolValue(false),
-		XffNumTrustedHops:                          0,
-		SkipXffAppend:                              false,
-		Via:                                        "",
-		GenerateRequestId:                          NewBoolValue(true),
-		ForwardClientCertDetails:                   xdshttp.HttpConnectionManager_SANITIZE,
-		SetCurrentClientCertDetails:                nil,
-		Proxy_100Continue:                          false,
+		UseRemoteAddress:            NewBoolValue(false),
+		XffNumTrustedHops:           0,
+		SkipXffAppend:               false,
+		Via:                         "",
+		GenerateRequestId:           NewBoolValue(true),
+		ForwardClientCertDetails:    xdshttp.HttpConnectionManager_SANITIZE,
+		SetCurrentClientCertDetails: nil,
+		Proxy_100Continue:           false,
 		RepresentIpv4RemoteAddressAsIpv4MappedIpv6: false,
 	}
-	filterName := "envoy.http_connection_manager"
+	filterName := wellknown.HTTPConnectionManager
 	address := core.Address{
 		Address: &core.Address_SocketAddress{
 			SocketAddress: &core.SocketAddress{

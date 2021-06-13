@@ -33,9 +33,6 @@ var (
 	_ = ptypes.DynamicAny{}
 )
 
-// define the regex for a UUID once up-front
-var _route_uuidPattern = regexp.MustCompile("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
-
 // Validate checks the field values on RouteConfiguration with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, an error is returned.
@@ -71,6 +68,18 @@ func (m *RouteConfiguration) Validate() error {
 		}
 	}
 
+	for idx, item := range m.GetInternalOnlyHeaders() {
+		_, _ = idx, item
+
+		if !_RouteConfiguration_InternalOnlyHeaders_Pattern.MatchString(item) {
+			return RouteConfigurationValidationError{
+				field:  fmt.Sprintf("InternalOnlyHeaders[%v]", idx),
+				reason: "value does not match regex pattern \"^[^\\x00\\n\\r]*$\"",
+			}
+		}
+
+	}
+
 	if len(m.GetResponseHeadersToAdd()) > 1000 {
 		return RouteConfigurationValidationError{
 			field:  "ResponseHeadersToAdd",
@@ -93,6 +102,18 @@ func (m *RouteConfiguration) Validate() error {
 
 	}
 
+	for idx, item := range m.GetResponseHeadersToRemove() {
+		_, _ = idx, item
+
+		if !_RouteConfiguration_ResponseHeadersToRemove_Pattern.MatchString(item) {
+			return RouteConfigurationValidationError{
+				field:  fmt.Sprintf("ResponseHeadersToRemove[%v]", idx),
+				reason: "value does not match regex pattern \"^[^\\x00\\n\\r]*$\"",
+			}
+		}
+
+	}
+
 	if len(m.GetRequestHeadersToAdd()) > 1000 {
 		return RouteConfigurationValidationError{
 			field:  "RequestHeadersToAdd",
@@ -110,6 +131,18 @@ func (m *RouteConfiguration) Validate() error {
 					reason: "embedded message failed validation",
 					cause:  err,
 				}
+			}
+		}
+
+	}
+
+	for idx, item := range m.GetRequestHeadersToRemove() {
+		_, _ = idx, item
+
+		if !_RouteConfiguration_RequestHeadersToRemove_Pattern.MatchString(item) {
+			return RouteConfigurationValidationError{
+				field:  fmt.Sprintf("RequestHeadersToRemove[%v]", idx),
+				reason: "value does not match regex pattern \"^[^\\x00\\n\\r]*$\"",
 			}
 		}
 
@@ -185,6 +218,12 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = RouteConfigurationValidationError{}
+
+var _RouteConfiguration_InternalOnlyHeaders_Pattern = regexp.MustCompile("^[^\x00\n\r]*$")
+
+var _RouteConfiguration_ResponseHeadersToRemove_Pattern = regexp.MustCompile("^[^\x00\n\r]*$")
+
+var _RouteConfiguration_RequestHeadersToRemove_Pattern = regexp.MustCompile("^[^\x00\n\r]*$")
 
 // Validate checks the field values on Vhds with the rules defined in the proto
 // definition for this message. If any rules are violated, an error is returned.

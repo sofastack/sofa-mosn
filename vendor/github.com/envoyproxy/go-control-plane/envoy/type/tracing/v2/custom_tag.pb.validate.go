@@ -33,9 +33,6 @@ var (
 	_ = ptypes.DynamicAny{}
 )
 
-// define the regex for a UUID once up-front
-var _custom_tag_uuidPattern = regexp.MustCompile("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
-
 // Validate checks the field values on CustomTag with the rules defined in the
 // proto definition for this message. If any rules are violated, an error is returned.
 func (m *CustomTag) Validate() error {
@@ -330,6 +327,13 @@ func (m *CustomTag_Header) Validate() error {
 		}
 	}
 
+	if !_CustomTag_Header_Name_Pattern.MatchString(m.GetName()) {
+		return CustomTag_HeaderValidationError{
+			field:  "Name",
+			reason: "value does not match regex pattern \"^[^\\x00\\n\\r]*$\"",
+		}
+	}
+
 	// no validation rules for DefaultValue
 
 	return nil
@@ -388,6 +392,8 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = CustomTag_HeaderValidationError{}
+
+var _CustomTag_Header_Name_Pattern = regexp.MustCompile("^[^\x00\n\r]*$")
 
 // Validate checks the field values on CustomTag_Metadata with the rules
 // defined in the proto definition for this message. If any rules are

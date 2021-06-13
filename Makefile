@@ -17,7 +17,7 @@ BUILD_IMAGE     = godep-builder
 
 WASM_IMAGE      = mosn-wasm
 
-IMAGE_NAME      = mosn
+IMAGE_NAME      ?= mosn
 REPOSITORY      = mosnio/${IMAGE_NAME}
 
 RPM_BUILD_IMAGE = afenp-rpm-builder
@@ -162,4 +162,7 @@ shell:
 	docker build --rm -t ${BUILD_IMAGE} build/contrib/builder/binary
 	docker run --rm -ti -v $(shell go env GOPATH):/go -v $(shell pwd):/go/src/${PROJECT_NAME} -w /go/src/${PROJECT_NAME} ${BUILD_IMAGE} /bin/bash
 
-.PHONY: unit-test build image rpm upload shell
+sidecar:
+	docker build --no-cache -t ${REPOSITORY}:${MAJOR_VERSION}-${GIT_VERSION}-$(shell date '+%Y%m%d%H%M') -f build/contrib/builder/sidecar/Dockerfile .
+
+.PHONY: unit-test build image rpm upload shell sidecar

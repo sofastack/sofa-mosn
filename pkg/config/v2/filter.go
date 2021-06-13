@@ -21,8 +21,8 @@ import (
 	"encoding/json"
 	"time"
 
-	"istio.io/api/mixer/v1/config/client"
 	"mosn.io/api"
+	"mosn.io/mosn/pkg/mixer/v1/config/client"
 )
 
 type HealthCheckFilterConfig struct {
@@ -96,6 +96,7 @@ const (
 	Gzip                       = "gzip"
 	FaultTolerance             = "fault_tolerance"
 	IstioStats                 = "istio.stats"
+	RBAC                       = "rbac"
 	DSL                        = "dsl"
 	Mirror                     = "mirror"
 	DubboStream                = "dubbo_stream"

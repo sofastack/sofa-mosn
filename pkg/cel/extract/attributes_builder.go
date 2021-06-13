@@ -27,10 +27,10 @@ import (
 	"time"
 
 	"github.com/gogo/protobuf/proto"
-	v1 "istio.io/api/mixer/v1"
 	"mosn.io/api"
-	"mosn.io/pkg/buffer"
+	v1 "mosn.io/mosn/pkg/mixer/v1"
 	"mosn.io/mosn/pkg/variable"
+	"mosn.io/pkg/buffer"
 
 	"mosn.io/mosn/pkg/cel/attribute"
 	"mosn.io/mosn/pkg/istio/utils"

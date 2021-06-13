@@ -41,11 +41,9 @@ func (info *secretInfo) full() bool {
 
 // tlsContext is an implmentation of basic provider
 type tlsContext struct {
-	serverName string
-	ticket     string
-	matches    map[string]struct{}
-	client     *types.TLSConfigContext
-	server     *types.TLSConfigContext
+	matches map[string]struct{}
+	client  *types.TLSConfigContext
+	server  *types.TLSConfigContext
 }
 
 func (ctx *tlsContext) buildMatch(tlsConfig *tls.Config) {
@@ -70,7 +68,7 @@ func (ctx *tlsContext) buildMatch(tlsConfig *tls.Config) {
 	for _, protocol := range tlsConfig.NextProtos {
 		matches[protocol] = struct{}{}
 	}
-	matches[ctx.serverName] = struct{}{}
+	matches[tlsConfig.ServerName] = struct{}{}
 	ctx.matches = matches
 }
 
@@ -161,10 +159,7 @@ func newTLSContext(cfg *v2.TLSConfig, secret *secretInfo) (*tlsContext, error) {
 	tmpl.RootCAs = pool
 	tmpl.ClientCAs = pool
 	// set tls context
-	ctx := &tlsContext{
-		serverName: cfg.ServerName,
-		ticket:     cfg.Ticket,
-	}
+	ctx := &tlsContext{}
 	cert, err := hooks.GetCertificate(secret.Certificate, secret.PrivateKey)
 	switch err {
 	case ErrorNoCertConfigure:
@@ -200,7 +195,8 @@ func tlsConfigTemplate(c *v2.TLSConfig) (*tls.Config, error) {
 		for _, s := range ciphers {
 			cipher, ok := ciphersMap[s]
 			if !ok {
-				return nil, fmt.Errorf("cipher %s is not supported", s)
+				log.DefaultLogger.Warnf("[mtls] cipher %s is not supported", s)
+				continue
 			}
 			tlsConfig.CipherSuites = append(tlsConfig.CipherSuites, cipher)
 		}
@@ -252,5 +248,6 @@ func tlsConfigTemplate(c *v2.TLSConfig) (*tls.Config, error) {
 			tlsConfig.NextProtos = append(tlsConfig.NextProtos, p)
 		}
 	}
+	tlsConfig.ServerName = c.ServerName
 	return tlsConfig, nil
 }

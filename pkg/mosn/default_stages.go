@@ -33,6 +33,7 @@ import (
 // modify it in main function
 func DefaultInitStage(c *v2.MOSNConfig) {
 	types.InitDefaultPath(configmanager.GetConfigPath())
+	types.InitXdsFromMOSNConfig(c, log.StartLogger.Fatalf)
 	InitDebugServe(c)
 	InitializePidFile(c)
 	InitializeTracing(c)

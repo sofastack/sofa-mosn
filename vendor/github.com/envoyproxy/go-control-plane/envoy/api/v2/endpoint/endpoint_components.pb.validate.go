@@ -37,9 +37,6 @@ var (
 	_ = core.HealthStatus(0)
 )
 
-// define the regex for a UUID once up-front
-var _endpoint_components_uuidPattern = regexp.MustCompile("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
-
 // Validate checks the field values on Endpoint with the rules defined in the
 // proto definition for this message. If any rules are violated, an error is returned.
 func (m *Endpoint) Validate() error {
@@ -66,6 +63,8 @@ func (m *Endpoint) Validate() error {
 			}
 		}
 	}
+
+	// no validation rules for Hostname
 
 	return nil
 }
@@ -364,6 +363,8 @@ func (m *Endpoint_HealthCheckConfig) Validate() error {
 			reason: "value must be less than or equal to 65535",
 		}
 	}
+
+	// no validation rules for Hostname
 
 	return nil
 }

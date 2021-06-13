@@ -23,8 +23,10 @@ import (
 	"testing"
 	"time"
 
-	auth "github.com/envoyproxy/go-control-plane/envoy/api/v2/auth"
-	core "github.com/envoyproxy/go-control-plane/envoy/api/v2/core"
+	envoy_api_v2_auth "github.com/envoyproxy/go-control-plane/envoy/api/v2/auth"
+	envoy_api_v2_core "github.com/envoyproxy/go-control-plane/envoy/api/v2/core"
+	envoy_config_core_v3 "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
+	envoy_extensions_transport_sockets_tls_v3 "github.com/envoyproxy/go-control-plane/envoy/extensions/transport_sockets/tls/v3"
 )
 
 func TestFaultInjectMarshal(t *testing.T) {
@@ -53,11 +55,28 @@ func TestDelayInjectMarshal(t *testing.T) {
 	}
 }
 
-func TestSecretConfigWrapperMarshal(t *testing.T) {
+func TestSecretConfigWrapperMarshalXDSV2(t *testing.T) {
 	sw := &SecretConfigWrapper{
-		Config: &auth.SdsSecretConfig{
+		Config: &envoy_extensions_transport_sockets_tls_v3.SdsSecretConfig{},
+		ConfigDeprecated: &envoy_api_v2_auth.SdsSecretConfig{
 			Name:      "sds",
-			SdsConfig: &core.ConfigSource{},
+			SdsConfig: &envoy_api_v2_core.ConfigSource{},
+		},
+	}
+	b, err := json.Marshal(sw)
+	if err != nil {
+		t.Fatal(err)
+		if !strings.Contains(string(b), "sdsConfig") {
+			t.Fatalf("unexpected output: %s", string(b))
+		}
+	}
+}
+
+func TestSecretConfigWrapperMarshalXDSV3(t *testing.T) {
+	sw := &SecretConfigWrapper{
+		Config: &envoy_extensions_transport_sockets_tls_v3.SdsSecretConfig{
+			Name:      "sds",
+			SdsConfig: &envoy_config_core_v3.ConfigSource{},
 		},
 	}
 	b, err := json.Marshal(sw)

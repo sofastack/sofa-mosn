@@ -9,7 +9,7 @@ import (
 	"github.com/golang/protobuf/jsonpb"
 	"mosn.io/mosn/pkg/admin/store"
 	"mosn.io/mosn/pkg/log"
-	"mosn.io/mosn/pkg/xds/conv"
+	"mosn.io/mosn/pkg/xds"
 )
 
 const (
@@ -32,10 +32,10 @@ func statsForIstio(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sb := bytes.NewBufferString("")
-	sb.WriteString(fmt.Sprintf("%s: %d\n", CDS_UPDATE_SUCCESS, conv.Stats.CdsUpdateSuccess.Count()))
-	sb.WriteString(fmt.Sprintf("%s: %d\n", CDS_UPDATE_REJECT, conv.Stats.CdsUpdateReject.Count()))
-	sb.WriteString(fmt.Sprintf("%s: %d\n", LDS_UPDATE_SUCCESS, conv.Stats.LdsUpdateSuccess.Count()))
-	sb.WriteString(fmt.Sprintf("%s: %d\n", LDS_UPDATE_REJECT, conv.Stats.LdsUpdateReject.Count()))
+	sb.WriteString(fmt.Sprintf("%s: %d\n", CDS_UPDATE_SUCCESS, xds.GetStats().CdsUpdateSuccess.Count()))
+	sb.WriteString(fmt.Sprintf("%s: %d\n", CDS_UPDATE_REJECT, xds.GetStats().CdsUpdateReject.Count()))
+	sb.WriteString(fmt.Sprintf("%s: %d\n", LDS_UPDATE_SUCCESS, xds.GetStats().LdsUpdateSuccess.Count()))
+	sb.WriteString(fmt.Sprintf("%s: %d\n", LDS_UPDATE_REJECT, xds.GetStats().LdsUpdateReject.Count()))
 	sb.WriteString(fmt.Sprintf("%s: %d\n", SERVER_STATE, state))
 	sb.WriteString(fmt.Sprintf("%s: %d\n", STAT_WORKERS_STARTED, workersStarted))
 	_, err = sb.WriteTo(w)

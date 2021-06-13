@@ -43,7 +43,7 @@ import (
 	"mosn.io/mosn/pkg/configmanager"
 	"mosn.io/mosn/pkg/log"
 	"mosn.io/mosn/pkg/metrics"
-	"mosn.io/mosn/pkg/xds/conv"
+	"mosn.io/mosn/pkg/xds"
 )
 
 func getEffectiveConfig(port uint32) (string, error) {
@@ -341,11 +341,11 @@ func TestDumpStatsForIstio(t *testing.T) {
 
 	time.Sleep(time.Second) //wait server start
 
-	conv.InitStats()
-	conv.Stats.CdsUpdateSuccess.Inc(1)
-	conv.Stats.CdsUpdateReject.Inc(2)
-	conv.Stats.LdsUpdateSuccess.Inc(3)
-	conv.Stats.LdsUpdateReject.Inc(4)
+	xds.InitStats()
+	xds.GetStats().CdsUpdateSuccess.Inc(1)
+	xds.GetStats().CdsUpdateReject.Inc(2)
+	xds.GetStats().LdsUpdateSuccess.Inc(3)
+	xds.GetStats().LdsUpdateReject.Inc(4)
 
 	statsForIstio, err := getStatsForIstio(config.Port)
 	if err != nil {
@@ -644,7 +644,7 @@ func TestRegisterNewAPI(t *testing.T) {
 func TestHelpAPI(t *testing.T) {
 	// reset
 	apiHandleFuncStore = map[string]func(http.ResponseWriter, *http.Request){
-		"/": help,
+		"/":                       help,
 		"/api/v1/config_dump":     configDump,
 		"/api/v1/stats":           statsDump,
 		"/api/v1/update_loglevel": updateLogLevel,

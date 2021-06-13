@@ -33,9 +33,6 @@ var (
 	_ = ptypes.DynamicAny{}
 )
 
-// define the regex for a UUID once up-front
-var _grpc_service_uuidPattern = regexp.MustCompile("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
-
 // Validate checks the field values on GrpcService with the rules defined in
 // the proto definition for this message. If any rules are violated, an error
 // is returned.
@@ -476,7 +473,9 @@ type GrpcService_GoogleGrpc_GoogleLocalCredentialsValidationError struct {
 func (e GrpcService_GoogleGrpc_GoogleLocalCredentialsValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e GrpcService_GoogleGrpc_GoogleLocalCredentialsValidationError) Reason() string { return e.reason }
+func (e GrpcService_GoogleGrpc_GoogleLocalCredentialsValidationError) Reason() string {
+	return e.reason
+}
 
 // Cause function returns cause value.
 func (e GrpcService_GoogleGrpc_GoogleLocalCredentialsValidationError) Cause() error { return e.cause }

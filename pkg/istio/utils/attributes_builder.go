@@ -26,7 +26,7 @@ import (
 	google_protobuf1 "github.com/gogo/protobuf/types"
 	google_protobuf2 "github.com/gogo/protobuf/types"
 
-	"istio.io/api/mixer/v1"
+	v1 "mosn.io/mosn/pkg/mixer/v1"
 )
 
 // AttributesBuilder to add attribute to protobuf Attributes.

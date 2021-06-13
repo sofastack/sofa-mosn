@@ -33,9 +33,6 @@ var (
 	_ = ptypes.DynamicAny{}
 )
 
-// define the regex for a UUID once up-front
-var _config_source_uuidPattern = regexp.MustCompile("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
-
 // Validate checks the field values on ApiConfigSource with the rules defined
 // in the proto definition for this message. If any rules are violated, an
 // error is returned.
@@ -246,6 +243,13 @@ var _ interface {
 func (m *SelfConfigSource) Validate() error {
 	if m == nil {
 		return nil
+	}
+
+	if _, ok := ApiVersion_name[int32(m.GetTransportApiVersion())]; !ok {
+		return SelfConfigSourceValidationError{
+			field:  "TransportApiVersion",
+			reason: "value must be one of the defined enum values",
+		}
 	}
 
 	return nil

@@ -33,9 +33,6 @@ var (
 	_ = ptypes.DynamicAny{}
 )
 
-// define the regex for a UUID once up-front
-var _certs_uuidPattern = regexp.MustCompile("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
-
 // Validate checks the field values on Certificates with the rules defined in
 // the proto definition for this message. If any rules are violated, an error
 // is returned.
@@ -334,6 +331,9 @@ func (m *SubjectAlternateName) Validate() error {
 
 	case *SubjectAlternateName_Uri:
 		// no validation rules for Uri
+
+	case *SubjectAlternateName_IpAddress:
+		// no validation rules for IpAddress
 
 	}
 

@@ -20,8 +20,8 @@ package http
 import (
 	"testing"
 
-	"istio.io/api/mixer/v1/config/client"
-	"mosn.io/mosn/pkg/config/v2"
+	v2 "mosn.io/mosn/pkg/config/v2"
+	"mosn.io/mosn/pkg/mixer/v1/config/client"
 )
 
 func TestHandlerReport(t *testing.T) {

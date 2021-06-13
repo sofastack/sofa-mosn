@@ -18,9 +18,9 @@
 package control
 
 import (
-	"istio.io/api/mixer/v1"
-	"mosn.io/mosn/pkg/config/v2"
+	v2 "mosn.io/mosn/pkg/config/v2"
 	"mosn.io/mosn/pkg/istio/mixerclient"
+	v1 "mosn.io/mosn/pkg/mixer/v1"
 )
 
 // ClientContextBase hold mixer client

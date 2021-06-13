@@ -41,6 +41,7 @@ import (
 	_ "mosn.io/mosn/pkg/filter/stream/mixer"
 	_ "mosn.io/mosn/pkg/filter/stream/payloadlimit"
 	_ "mosn.io/mosn/pkg/filter/stream/proxywasm"
+	_ "mosn.io/mosn/pkg/filter/stream/rbac"
 	_ "mosn.io/mosn/pkg/filter/stream/stats"
 	_ "mosn.io/mosn/pkg/filter/stream/transcoder/http2bolt"
 	_ "mosn.io/mosn/pkg/metrics/sink"
@@ -69,7 +70,12 @@ import (
 	_ "mosn.io/mosn/pkg/wasm/runtime/wasmer"
 	_ "mosn.io/mosn/pkg/xds"
 	_ "mosn.io/pkg/buffer"
+
+	corev3 "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
+	_ "github.com/envoyproxy/go-control-plane/envoy/extensions/filters/http/router/v3"
 )
+
+var _ = &corev3.Pipe{}
 
 // Version mosn version
 var Version = "0.4.0"

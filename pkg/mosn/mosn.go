@@ -49,7 +49,7 @@ type Mosn struct {
 	Config         *v2.MOSNConfig
 	// internal data
 	servers   []server.Server
-	xdsClient *xds.Client
+	xdsClient xds.Client
 	wg        sync.WaitGroup
 }
 
@@ -269,7 +269,7 @@ func (m *Mosn) CleanUpgrade() {
 func (m *Mosn) StartXdsClient() {
 	c := m.Config
 	log.StartLogger.Infof("[mosn start] mosn start xds client")
-	xdsClient := &xds.Client{}
+	xdsClient := xds.NewClient()
 	utils.GoWithRecover(func() {
 		xdsClient.Start(c)
 	}, nil)

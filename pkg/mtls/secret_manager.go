@@ -85,7 +85,7 @@ func (mng *secretManager) getOrCreateProvider(cfg *v2.TLSConfig) *sdsProvider {
 		p.config.Store(cfg)
 		v.certificates[certName] = p
 		// set a certificate callback
-		client := GetSdsClient(cfg.SdsConfig.CertificateConfig.Config)
+		client := GetSdsClientV3(cfg.SdsConfig.CertificateConfig.Config)
 		client.AddUpdateCallback(cfg.SdsConfig.CertificateConfig.Config, p.setCertificate)
 		// set a validation callback
 		client.AddUpdateCallback(cfg.SdsConfig.ValidationConfig.Config, mng.setValidation)
@@ -104,7 +104,7 @@ func (mng *secretManager) getOrCreateProvider(cfg *v2.TLSConfig) *sdsProvider {
 		// update tls config
 		p.config.Store(cfg)
 		// update sds config
-		GetSdsClient(cfg.SdsConfig.CertificateConfig.Config)
+		GetSdsClientV3(cfg.SdsConfig.CertificateConfig.Config)
 		// update secret
 		if p.info.full() {
 			p.update()

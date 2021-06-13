@@ -20,14 +20,15 @@ package types
 import (
 	"bytes"
 	"encoding/json"
-
-	"github.com/golang/protobuf/jsonpb"
-	_struct "github.com/golang/protobuf/ptypes/struct"
-	"github.com/rcrowley/go-metrics"
-
 	"reflect"
 	"strconv"
 	"strings"
+
+	corev3 "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
+	"github.com/golang/protobuf/jsonpb"
+	_struct "github.com/golang/protobuf/ptypes/struct"
+	"github.com/rcrowley/go-metrics"
+	"mosn.io/mosn/pkg/config/v2"
 )
 
 const serviceMetaSeparator = ":"
@@ -65,6 +66,10 @@ var (
 		InterceptionMode: InterceptionRedirect,
 		ClusterID:        ClusterID,
 	}
+
+	// XdsVersion xds version
+	XdsVersionV3 = "V3"
+	XdsVersion   = XdsVersionV3
 )
 
 var globalXdsInfo = &XdsInfo{}
@@ -72,6 +77,25 @@ var globalXdsInfo = &XdsInfo{}
 // GetGlobalXdsInfo returns pointer of globalXdsInfo
 func GetGlobalXdsInfo() *XdsInfo {
 	return globalXdsInfo
+}
+
+func InitXdsFromMOSNConfig(config *v2.MOSNConfig, log func(string, ...interface{})) {
+	if node := config.Node; node == nil || len(node) <= 0 {
+		return
+	} else if err := InitXdsFromBootstrap(config.Node); err != nil {
+		log("parse bootstrap node config failed, %s", err)
+	}
+}
+
+func InitXdsFromBootstrap(raw []byte) (err error) {
+	var node corev3.Node
+	if err = (&jsonpb.Unmarshaler{AllowUnknownFields: true}).Unmarshal(bytes.NewReader(raw), &node); err != nil {
+		return
+	}
+	globalXdsInfo.ServiceCluster = node.Cluster
+	globalXdsInfo.ServiceNode = node.Id
+	globalXdsInfo.Metadata = node.Metadata
+	return
 }
 
 func InitXdsFlags(serviceCluster, serviceNode string, serviceMeta []string, labels []string) {

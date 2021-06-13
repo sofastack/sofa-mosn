@@ -136,6 +136,9 @@ func (sh *simpleHost) CreateConnection(context context.Context) types.CreateConn
 	if sh.SupportTLS() {
 		tlsMng = sh.ClusterInfo().TLSMng()
 	}
+	if log.DefaultLogger.GetLogLevel() >= log.DEBUG {
+		log.DefaultLogger.Debugf("[simpleHost] tlsMng: %v", tlsMng)
+	}
 	clientConn := network.NewClientConnection(sh.ClusterInfo().ConnectTimeout(), tlsMng, sh.Address(), nil)
 	clientConn.SetBufferLimit(sh.ClusterInfo().ConnBufferLimitBytes())
 

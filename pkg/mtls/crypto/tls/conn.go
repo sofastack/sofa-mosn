@@ -152,6 +152,11 @@ func (c *Conn) SetWriteDeadline(t time.Time) error {
 	return c.conn.SetWriteDeadline(t)
 }
 
+// SetServerName called before handshake as a client
+func (c *Conn) SetServerName(s string) {
+	c.serverName = s
+}
+
 // A halfConn represents one direction of the record layer
 // connection, either sending or receiving.
 type halfConn struct {

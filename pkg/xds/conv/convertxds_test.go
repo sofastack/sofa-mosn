@@ -47,11 +47,11 @@ import (
 	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/stretchr/testify/assert"
 	"github.com/valyala/fasthttp"
-	v1 "istio.io/api/mixer/v1"
-	"istio.io/api/mixer/v1/config/client"
 	v2 "mosn.io/mosn/pkg/config/v2"
 	"mosn.io/mosn/pkg/configmanager"
 	"mosn.io/mosn/pkg/filter/stream/faultinject"
+	v1 "mosn.io/mosn/pkg/mixer/v1"
+	"mosn.io/mosn/pkg/mixer/v1/config/client"
 	"mosn.io/mosn/pkg/router"
 	"mosn.io/mosn/pkg/server"
 	"mosn.io/mosn/pkg/upstream/cluster"
@@ -232,10 +232,7 @@ func Test_convertHeaders(t *testing.T) {
 
 func NewBoolValue(val bool) *wrappers.BoolValue {
 	return &wrappers.BoolValue{
-		Value:                val,
-		XXX_NoUnkeyedLiteral: struct{}{},
-		XXX_unrecognized:     nil,
-		XXX_sizecache:        0,
+		Value: val,
 	}
 }
 
@@ -409,14 +406,14 @@ func Test_convertListenerConfig(t *testing.T) {
 							TypedConfig: accessLogFilterConfig,
 						},
 					}},
-					UseRemoteAddress:                           NewBoolValue(false),
-					XffNumTrustedHops:                          0,
-					SkipXffAppend:                              false,
-					Via:                                        "",
-					GenerateRequestId:                          NewBoolValue(true),
-					ForwardClientCertDetails:                   xdshttp.HttpConnectionManager_SANITIZE,
-					SetCurrentClientCertDetails:                nil,
-					Proxy_100Continue:                          false,
+					UseRemoteAddress:            NewBoolValue(false),
+					XffNumTrustedHops:           0,
+					SkipXffAppend:               false,
+					Via:                         "",
+					GenerateRequestId:           NewBoolValue(true),
+					ForwardClientCertDetails:    xdshttp.HttpConnectionManager_SANITIZE,
+					SetCurrentClientCertDetails: nil,
+					Proxy_100Continue:           false,
 					RepresentIpv4RemoteAddressAsIpv4MappedIpv6: false,
 				},
 				filterName: "envoy.http_connection_manager",
@@ -844,7 +841,7 @@ func Test_convertStreamFilter_IsitoFault(t *testing.T) {
 		},
 	}
 	for i, tc := range testCases {
-		convertFilter := convertStreamFilter(IstioFault, tc.config)
+		convertFilter := convertStreamFilter(v2.FaultStream, tc.config)
 		if convertFilter.Type != v2.FaultStream {
 			t.Errorf("#%d convert to mosn stream filter not expected, want %s, got %s", i, v2.FaultStream, convertFilter.Type)
 			continue

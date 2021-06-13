@@ -1,7 +1,6 @@
 package jwtauthn
 
 import (
-	"encoding/json"
 	"testing"
 
 	envoycorev3 "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
@@ -10,6 +9,7 @@ import (
 	"github.com/golang/protobuf/ptypes/duration"
 	"github.com/lestrrat/go-jwx/jwk"
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 func TestProviderVerifier(t *testing.T) {
@@ -28,7 +28,7 @@ func TestProviderVerifier(t *testing.T) {
 		jwksFetcher := NewMockJwksFetcher(ctrl)
 		jwksFetcher.EXPECT().Fetch(gomock.Any()).Return(jwks, nil)
 
-		verifier, err := NewVerifier(config.Rules[0].Requires, config.Providers, nil, jwksFetcher)
+		verifier, err := NewVerifier(config.Rules[0].GetRequires(), config.Providers, nil, jwksFetcher)
 		assert.Nil(t, err)
 
 		headers := newHeaders(
@@ -47,7 +47,7 @@ func TestProviderVerifier(t *testing.T) {
 			t.FailNow()
 		}
 
-		verifier, err := NewVerifier(config.Rules[0].Requires, config.Providers, nil, nil)
+		verifier, err := NewVerifier(config.Rules[0].GetRequires(), config.Providers, nil, nil)
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 			t.FailNow()
@@ -61,42 +61,42 @@ func TestProviderVerifier(t *testing.T) {
 	t.Run("JWT must be issued by the provider specified in the requirement.", func(t *testing.T) {
 		configJSON := `
 {
-   "providers": {
-      "example_provider": {
-         "issuer": "https://example.com",
-         "audiences": [
-            "example_service",
-            "http://example_service1",
-            "https://example_service2/"
-         ],
-         "remote_jwks": {
-            "http_uri": {
-               "uri": "https://pubkey_server/pubkey_path",
-               "cluster": "pubkey_cluster"
-            }
-         },
-         "forward_payload_header": "example-auth-userinfo"
+  "providers": {
+    "example_provider": {
+      "issuer": "https://example.com",
+      "audiences": [
+        "example_service",
+        "http://example_service1",
+        "https://example_service2/"
+      ],
+      "remoteJwks": {
+        "httpUri": {
+          "uri": "https://pubkey_server/pubkey_path",
+          "cluster": "pubkey_cluster"
+        }
       },
-      "other_provider": {
-         "issuer": "other_issuer",
-         "forward_payload_header": "other-auth-userinfo"
+      "forwardPayloadHeader": "example-auth-userinfo"
+    },
+    "other_provider": {
+      "issuer": "other_issuer",
+      "forwardPayloadHeader": "other-auth-userinfo"
+    }
+  },
+  "rules": [
+    {
+      "match": {
+        "path": "/"
+      },
+      "requires": {
+        "providerName": "other_provider"
       }
-   },
-   "rules": [
-      {
-         "match": {
-            "path": "/"
-         },
-         "requires": {
-            "provider_name": "other_provider"
-         }
-      }
-   ]
+    }
+  ]
 }
 `
 
 		var config jwtauthnv3.JwtAuthentication
-		if err := json.Unmarshal([]byte(configJSON), &config); err != nil {
+		if err := protojson.Unmarshal([]byte(configJSON), &config); err != nil {
 			t.Errorf("unmarshal config: %v", err)
 			t.FailNow()
 		}
@@ -118,11 +118,11 @@ func TestProviderVerifier(t *testing.T) {
 			RemoteJwks: remoteJwks,
 		}
 
-		config.Rules[0].Requires.RequiresType = &jwtauthnv3.JwtRequirement_ProviderName{
+		config.Rules[0].GetRequires().RequiresType = &jwtauthnv3.JwtRequirement_ProviderName{
 			ProviderName: "other_provider",
 		}
 
-		verifier, err := NewVerifier(config.Rules[0].Requires, config.Providers, nil, nil)
+		verifier, err := NewVerifier(config.Rules[0].GetRequires(), config.Providers, nil, nil)
 		if err != nil {
 			t.Errorf("create verifyer: %v", err)
 			t.FailNow()

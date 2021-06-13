@@ -3,7 +3,7 @@ package mixer
 import (
 	"testing"
 
-	v1 "istio.io/api/mixer/v1"
+	v1 "mosn.io/mosn/pkg/mixer/v1"
 )
 
 func TestParseMixerFilter(t *testing.T) {

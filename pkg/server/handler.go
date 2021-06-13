@@ -639,9 +639,21 @@ func (arc *activeRawConn) SetOriginalAddr(ip string, port int) {
 	}
 }
 
+func (arc activeRawConn) isVirtualInbound() bool {
+	config := arc.activeListener.listener.Config().ListenerConfig
+	return config.Type == v2.INGRESS && config.BindToPort && config.UseOriginalDst
+}
+
 func (arc *activeRawConn) UseOriginalDst(ctx context.Context) {
 	var listener, localListener *activeListener
 	var found bool
+	var localIP string
+
+	if arc.isVirtualInbound() {
+		localIP = "127.0.0.1"
+	} else {
+		localIP = "0.0.0.0"
+	}
 
 	for _, lst := range arc.activeListener.handler.listeners {
 		if lst.listenIP == arc.originalDstIP && lst.listenPort == arc.originalDstPort {
@@ -649,10 +661,9 @@ func (arc *activeRawConn) UseOriginalDst(ctx context.Context) {
 			break
 		}
 
-		if lst.listenPort == arc.originalDstPort && lst.listenIP == "0.0.0.0" {
+		if lst.listenPort == arc.originalDstPort && lst.listenIP == localIP {
 			localListener = lst
 		}
-
 	}
 
 	var ch chan api.Connection

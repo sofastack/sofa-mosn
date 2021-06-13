@@ -23,11 +23,11 @@ import (
 	"strings"
 
 	"github.com/gogo/protobuf/jsonpb"
-	"istio.io/api/mixer/v1/config/client"
 	"mosn.io/api"
 	"mosn.io/mosn/pkg/config/v2"
 	"mosn.io/mosn/pkg/istio/control/http"
 	"mosn.io/mosn/pkg/log"
+	"mosn.io/mosn/pkg/mixer/v1/config/client"
 	"mosn.io/pkg/buffer"
 )
 

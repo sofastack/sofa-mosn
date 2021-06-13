@@ -18,10 +18,10 @@
 package cluster
 
 import (
+	"net"
+	"regexp"
 	"strings"
 	"sync"
-
-	"net"
 
 	"mosn.io/api"
 	v2 "mosn.io/mosn/pkg/config/v2"
@@ -46,6 +46,14 @@ func newOriginalDstLoadBalancer(info types.ClusterInfo, hosts types.HostSet) typ
 		host:  make(map[string]types.Host),
 	}
 }
+
+var (
+	ipPattern = regexp.MustCompile("^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}")
+)
+
+const (
+	localhost = "127.0.0.1"
+)
 
 func (lb *OriginalDstLoadBalancer) ChooseHost(lbCtx types.LoadBalancerContext) types.Host {
 
@@ -81,6 +89,10 @@ func (lb *OriginalDstLoadBalancer) ChooseHost(lbCtx types.LoadBalancerContext) t
 	// if does not specify a port and default useing 80.
 	if ok := strings.Contains(dstAdd, ":"); !ok {
 		dstAdd = dstAdd + ":80"
+	}
+
+	if mosnctx.Get(ctx, types.ContextKeyListenerType) == v2.INGRESS {
+		dstAdd = ipPattern.ReplaceAllString(dstAdd, localhost)
 	}
 
 	var config v2.Host

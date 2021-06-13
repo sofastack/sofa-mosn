@@ -38,6 +38,7 @@ type MOSNConfig struct {
 	RawDynamicResources  json.RawMessage      `json:"dynamic_resources,omitempty"` //dynamic_resources raw message
 	RawStaticResources   json.RawMessage      `json:"static_resources,omitempty"`  //static_resources raw message
 	RawAdmin             json.RawMessage      `json:"admin,omitempty"`             // admin raw message
+	Node                 json.RawMessage      `json:"node"`
 	Debug                PProfConfig          `json:"pprof,omitempty"`
 	Pid                  string               `json:"pid,omitempty"`                 // pid file
 	Plugin               PluginConfig         `json:"plugin,omitempty"`              // plugin config

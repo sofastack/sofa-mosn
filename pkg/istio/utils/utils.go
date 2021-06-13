@@ -23,8 +23,8 @@ import (
 	"strings"
 
 	"github.com/gogo/protobuf/jsonpb"
-	v1 "istio.io/api/mixer/v1"
 	"mosn.io/api"
+	v1 "mosn.io/mosn/pkg/mixer/v1"
 )
 
 const (

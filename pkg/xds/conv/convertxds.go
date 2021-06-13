@@ -95,7 +95,7 @@ func ConvertListenerConfig(xdsListener *xdsapi.Listener) *v2.Listener {
 			Inspector:      true,
 			AccessLogs:     convertAccessLogs(xdsListener),
 		},
-		Addr: convertAddress(xdsListener.Address),
+		Addr:                    convertAddress(xdsListener.Address),
 		PerConnBufferLimitBytes: xdsListener.GetPerConnectionBufferLimitBytes().GetValue(),
 	}
 
@@ -1407,8 +1407,8 @@ func convertTLS(xdsTLSContext interface{}) v2.TLSConfig {
 		isSdsMode = true
 		if validationContext, ok := common.GetValidationContextType().(*xdsauth.CommonTlsContext_CombinedValidationContext); ok {
 			config.SdsConfig = &v2.SdsConfig{
-				CertificateConfig: &v2.SecretConfigWrapper{Config: tlsCertSdsConfig[0]},
-				ValidationConfig:  &v2.SecretConfigWrapper{Config: validationContext.CombinedValidationContext.GetValidationContextSdsSecretConfig()},
+				CertificateConfig: &v2.SecretConfigWrapper{ConfigDeprecated: tlsCertSdsConfig[0]},
+				ValidationConfig:  &v2.SecretConfigWrapper{ConfigDeprecated: validationContext.CombinedValidationContext.GetValidationContextSdsSecretConfig()},
 			}
 		}
 	}

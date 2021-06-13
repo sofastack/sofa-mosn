@@ -101,29 +101,6 @@ func TestAddBytesSendListener(t *testing.T) {
 	}
 }
 
-func TestConnectTimeout(t *testing.T) {
-	timeout := time.Second
-
-	remoteAddr, _ := net.ResolveTCPAddr("tcp", "2.2.2.2:22222")
-	conn := NewClientConnection(timeout, nil, remoteAddr, nil)
-	begin := time.Now()
-	err := conn.Connect()
-	if err == nil {
-		t.Errorf("connect should timeout")
-		return
-	}
-
-	if err, ok := err.(net.Error); ok && !err.Timeout() {
-		t.Errorf("connect should timeout")
-		return
-	}
-
-	sub := time.Now().Sub(begin)
-	if sub < timeout-10*time.Millisecond {
-		t.Errorf("connect should timeout %v, but get %v", timeout, sub)
-	}
-}
-
 func TestClientConectionRemoteaddrIsNil(t *testing.T) {
 	conn := NewClientConnection(0, nil, nil, nil)
 	err := conn.Connect()

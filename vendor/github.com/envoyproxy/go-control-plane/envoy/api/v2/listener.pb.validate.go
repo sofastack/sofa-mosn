@@ -37,9 +37,6 @@ var (
 	_ = core.TrafficDirection(0)
 )
 
-// define the regex for a UUID once up-front
-var _listener_uuidPattern = regexp.MustCompile("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
-
 // Validate checks the field values on Listener with the rules defined in the
 // proto definition for this message. If any rules are violated, an error is returned.
 func (m *Listener) Validate() error {
@@ -228,6 +225,21 @@ func (m *Listener) Validate() error {
 	}
 
 	// no validation rules for ReusePort
+
+	for idx, item := range m.GetAccessLog() {
+		_, _ = idx, item
+
+		if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return ListenerValidationError{
+					field:  fmt.Sprintf("AccessLog[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
 
 	return nil
 }
@@ -479,7 +491,9 @@ type Listener_ConnectionBalanceConfig_ExactBalanceValidationError struct {
 func (e Listener_ConnectionBalanceConfig_ExactBalanceValidationError) Field() string { return e.field }
 
 // Reason function returns reason value.
-func (e Listener_ConnectionBalanceConfig_ExactBalanceValidationError) Reason() string { return e.reason }
+func (e Listener_ConnectionBalanceConfig_ExactBalanceValidationError) Reason() string {
+	return e.reason
+}
 
 // Cause function returns cause value.
 func (e Listener_ConnectionBalanceConfig_ExactBalanceValidationError) Cause() error { return e.cause }

@@ -24,8 +24,8 @@ import (
 	"time"
 
 	"google.golang.org/grpc"
-	v1 "istio.io/api/mixer/v1"
 	"mosn.io/mosn/pkg/log"
+	v1 "mosn.io/mosn/pkg/mixer/v1"
 	"mosn.io/mosn/pkg/upstream/cluster"
 )
 

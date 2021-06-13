@@ -10,9 +10,9 @@ import (
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/gogo/protobuf/types"
-	v1 "istio.io/api/mixer/v1"
 	"mosn.io/api"
 	"mosn.io/mosn/pkg/istio/utils"
+	v1 "mosn.io/mosn/pkg/mixer/v1"
 	"mosn.io/mosn/pkg/protocol"
 	mtypes "mosn.io/mosn/pkg/types"
 	"mosn.io/mosn/pkg/variable"

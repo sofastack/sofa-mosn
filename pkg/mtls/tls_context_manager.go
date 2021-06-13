@@ -100,6 +100,9 @@ func (mng *serverContextManager) Conn(c net.Conn) (net.Conn, error) {
 		return c, nil
 	}
 	if !mng.inspector {
+		if log.DefaultLogger.GetLogLevel() >= log.DEBUG {
+			log.DefaultLogger.Debugf("[mtls] connected as server, remote addr: %s", c.RemoteAddr())
+		}
 		return &TLSConn{
 			tls.Server(c, mng.config.Clone()),
 		}, nil
@@ -115,6 +118,9 @@ func (mng *serverContextManager) Conn(c net.Conn) (net.Conn, error) {
 	switch buf[0] {
 	// TLS handshake
 	case 0x16:
+		if log.DefaultLogger.GetLogLevel() >= log.DEBUG {
+			log.DefaultLogger.Debugf("[mtls] connected as server, remote addr: %s", c.RemoteAddr())
+		}
 		return &TLSConn{
 			tls.Server(conn, mng.config.Clone()),
 		}, nil
@@ -126,7 +132,7 @@ func (mng *serverContextManager) Conn(c net.Conn) (net.Conn, error) {
 
 func (mng *serverContextManager) Enabled() bool {
 	for _, p := range mng.providers {
-		if p.Ready() {
+		if !p.Empty() {
 			return true
 		}
 	}
@@ -138,6 +144,8 @@ type clientContextManager struct {
 	provider types.TLSProvider
 	// fallback
 	fallback bool
+	// servername for tls verify
+	serverName string
 }
 
 // NewTLSClientContextManager returns a types.TLSContextManager used in TLS Client
@@ -147,8 +155,9 @@ func NewTLSClientContextManager(cfg *v2.TLSConfig) (types.TLSClientContextManage
 		return nil, err
 	}
 	mng := &clientContextManager{
-		provider: provider,
-		fallback: cfg.Fallback,
+		provider:   provider,
+		fallback:   cfg.Fallback,
+		serverName: cfg.ServerName,
 	}
 	return mng, nil
 }
@@ -164,10 +173,14 @@ func (mng *clientContextManager) Conn(c net.Conn) (net.Conn, error) {
 	}
 	// make tls connection and try handshake
 	tlsconn := tls.Client(c, mng.provider.GetTLSConfigContext(true).Config())
+	tlsconn.SetServerName(mng.serverName)
 	tlsconn.SetReadDeadline(time.Now().Add(handshakeTimeout))
 	if err := tlsconn.Handshake(); err != nil {
 		c.Close() // close the failed connection
 		return nil, err
+	}
+	if log.DefaultLogger.GetLogLevel() >= log.DEBUG {
+		log.DefaultLogger.Debugf("[mtls] connected as client, remote addr: %s", c.RemoteAddr())
 	}
 
 	return &TLSConn{

@@ -433,22 +433,22 @@ type isHttpRule_Pattern interface {
 }
 
 type HttpRule_Get struct {
-	Get string `protobuf:"bytes,2,opt,name=get,proto3,oneof"`
+	Get string `protobuf:"bytes,2,opt,name=get,proto3,oneof" json:"get,omitempty"`
 }
 type HttpRule_Put struct {
-	Put string `protobuf:"bytes,3,opt,name=put,proto3,oneof"`
+	Put string `protobuf:"bytes,3,opt,name=put,proto3,oneof" json:"put,omitempty"`
 }
 type HttpRule_Post struct {
-	Post string `protobuf:"bytes,4,opt,name=post,proto3,oneof"`
+	Post string `protobuf:"bytes,4,opt,name=post,proto3,oneof" json:"post,omitempty"`
 }
 type HttpRule_Delete struct {
-	Delete string `protobuf:"bytes,5,opt,name=delete,proto3,oneof"`
+	Delete string `protobuf:"bytes,5,opt,name=delete,proto3,oneof" json:"delete,omitempty"`
 }
 type HttpRule_Patch struct {
-	Patch string `protobuf:"bytes,6,opt,name=patch,proto3,oneof"`
+	Patch string `protobuf:"bytes,6,opt,name=patch,proto3,oneof" json:"patch,omitempty"`
 }
 type HttpRule_Custom struct {
-	Custom *CustomHttpPattern `protobuf:"bytes,8,opt,name=custom,proto3,oneof"`
+	Custom *CustomHttpPattern `protobuf:"bytes,8,opt,name=custom,proto3,oneof" json:"custom,omitempty"`
 }
 
 func (*HttpRule_Get) isHttpRule_Pattern()    {}
@@ -1104,7 +1104,8 @@ func (m *HttpRule) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 }
 
 func (m *HttpRule_Get) MarshalTo(dAtA []byte) (int, error) {
-	return m.MarshalToSizedBuffer(dAtA[:m.Size()])
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
 func (m *HttpRule_Get) MarshalToSizedBuffer(dAtA []byte) (int, error) {
@@ -1117,7 +1118,8 @@ func (m *HttpRule_Get) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 func (m *HttpRule_Put) MarshalTo(dAtA []byte) (int, error) {
-	return m.MarshalToSizedBuffer(dAtA[:m.Size()])
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
 func (m *HttpRule_Put) MarshalToSizedBuffer(dAtA []byte) (int, error) {
@@ -1130,7 +1132,8 @@ func (m *HttpRule_Put) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 func (m *HttpRule_Post) MarshalTo(dAtA []byte) (int, error) {
-	return m.MarshalToSizedBuffer(dAtA[:m.Size()])
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
 func (m *HttpRule_Post) MarshalToSizedBuffer(dAtA []byte) (int, error) {
@@ -1143,7 +1146,8 @@ func (m *HttpRule_Post) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 func (m *HttpRule_Delete) MarshalTo(dAtA []byte) (int, error) {
-	return m.MarshalToSizedBuffer(dAtA[:m.Size()])
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
 func (m *HttpRule_Delete) MarshalToSizedBuffer(dAtA []byte) (int, error) {
@@ -1156,7 +1160,8 @@ func (m *HttpRule_Delete) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 func (m *HttpRule_Patch) MarshalTo(dAtA []byte) (int, error) {
-	return m.MarshalToSizedBuffer(dAtA[:m.Size()])
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
 func (m *HttpRule_Patch) MarshalToSizedBuffer(dAtA []byte) (int, error) {
@@ -1169,7 +1174,8 @@ func (m *HttpRule_Patch) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 func (m *HttpRule_Custom) MarshalTo(dAtA []byte) (int, error) {
-	return m.MarshalToSizedBuffer(dAtA[:m.Size()])
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
 func (m *HttpRule_Custom) MarshalToSizedBuffer(dAtA []byte) (int, error) {
@@ -1572,10 +1578,7 @@ func (m *Http) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthHttp
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthHttp
 			}
 			if (iNdEx + skippy) > l {
@@ -1950,10 +1953,7 @@ func (m *HttpRule) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthHttp
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthHttp
 			}
 			if (iNdEx + skippy) > l {
@@ -2067,10 +2067,7 @@ func (m *CustomHttpPattern) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthHttp
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthHttp
 			}
 			if (iNdEx + skippy) > l {
@@ -2088,6 +2085,7 @@ func (m *CustomHttpPattern) Unmarshal(dAtA []byte) error {
 func skipHttp(dAtA []byte) (n int, err error) {
 	l := len(dAtA)
 	iNdEx := 0
+	depth := 0
 	for iNdEx < l {
 		var wire uint64
 		for shift := uint(0); ; shift += 7 {
@@ -2119,10 +2117,8 @@ func skipHttp(dAtA []byte) (n int, err error) {
 					break
 				}
 			}
-			return iNdEx, nil
 		case 1:
 			iNdEx += 8
-			return iNdEx, nil
 		case 2:
 			var length int
 			for shift := uint(0); ; shift += 7 {
@@ -2143,55 +2139,30 @@ func skipHttp(dAtA []byte) (n int, err error) {
 				return 0, ErrInvalidLengthHttp
 			}
 			iNdEx += length
-			if iNdEx < 0 {
-				return 0, ErrInvalidLengthHttp
-			}
-			return iNdEx, nil
 		case 3:
-			for {
-				var innerWire uint64
-				var start int = iNdEx
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return 0, ErrIntOverflowHttp
-					}
-					if iNdEx >= l {
-						return 0, io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					innerWire |= (uint64(b) & 0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				innerWireType := int(innerWire & 0x7)
-				if innerWireType == 4 {
-					break
-				}
-				next, err := skipHttp(dAtA[start:])
-				if err != nil {
-					return 0, err
-				}
-				iNdEx = start + next
-				if iNdEx < 0 {
-					return 0, ErrInvalidLengthHttp
-				}
-			}
-			return iNdEx, nil
+			depth++
 		case 4:
-			return iNdEx, nil
+			if depth == 0 {
+				return 0, ErrUnexpectedEndOfGroupHttp
+			}
+			depth--
 		case 5:
 			iNdEx += 4
-			return iNdEx, nil
 		default:
 			return 0, fmt.Errorf("proto: illegal wireType %d", wireType)
 		}
+		if iNdEx < 0 {
+			return 0, ErrInvalidLengthHttp
+		}
+		if depth == 0 {
+			return iNdEx, nil
+		}
 	}
-	panic("unreachable")
+	return 0, io.ErrUnexpectedEOF
 }
 
 var (
-	ErrInvalidLengthHttp = fmt.Errorf("proto: negative length found during unmarshaling")
-	ErrIntOverflowHttp   = fmt.Errorf("proto: integer overflow")
+	ErrInvalidLengthHttp        = fmt.Errorf("proto: negative length found during unmarshaling")
+	ErrIntOverflowHttp          = fmt.Errorf("proto: integer overflow")
+	ErrUnexpectedEndOfGroupHttp = fmt.Errorf("proto: unexpected end of group")
 )

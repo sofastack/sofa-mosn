@@ -18,7 +18,6 @@ type RequestContext struct {
 	Trailers      protocol.CommonHeader
 }
 
-
 func (ctx *RequestContext) Encode() ([]byte, error) {
 	var (
 		err               error
@@ -75,7 +74,7 @@ func (ctx *RequestContext) Encode() ([]byte, error) {
 
 func (ctx *RequestContext) Decode(b []byte) {
 	var (
-		length32 uint32 = 0
+		length32          uint32 = 0
 		err               error
 		actionContextData []byte
 		headersData       []byte

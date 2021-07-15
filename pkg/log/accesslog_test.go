@@ -32,8 +32,8 @@ import (
 
 	"mosn.io/api"
 	"mosn.io/mosn/pkg/types"
-	"mosn.io/pkg/log"
 	"mosn.io/mosn/pkg/variable"
+	"mosn.io/pkg/log"
 )
 
 func prepareLocalIpv6Ctx() context.Context {

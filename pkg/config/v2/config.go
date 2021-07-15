@@ -31,22 +31,22 @@ import (
 // Servers contains the listener, filter and so on
 // ClusterManager used to manage the upstream
 type MOSNConfig struct {
-	Servers              []ServerConfig       `json:"servers,omitempty"`                //server config
-	ClusterManager       ClusterManagerConfig `json:"cluster_manager,omitempty"`        //cluster config
-	CloseGraceful        bool                 `json:"close_graceful,omitempty"`         // graceful switch, default false
-	InheritOldMosnconfig bool                 `json:"inherit_old_mosnconfig,omitempty"` // inherit old mosn config switch, default false
-	Tracing              TracingConfig        `json:"tracing,omitempty"`
-	Metrics              MetricsConfig        `json:"metrics,omitempty"`
-	RawDynamicResources  json.RawMessage      `json:"dynamic_resources,omitempty"` //dynamic_resources raw message
-	RawStaticResources   json.RawMessage      `json:"static_resources,omitempty"`  //static_resources raw message
-	RawAdmin             json.RawMessage      `json:"admin,omitempty"`             // admin raw message
-	Debug                PProfConfig          `json:"pprof,omitempty"`
-	Pid                  string               `json:"pid,omitempty"`                 // pid file
-	Plugin               PluginConfig         `json:"plugin,omitempty"`              // plugin config
-	ThirdPartCodec       ThirdPartCodecConfig `json:"third_part_codec,omitempty"`    // third part codec config
-	Extends              []ExtendConfig       `json:"extends,omitempty"`             // extend config
-	Wasms                []WasmPluginConfig   `json:"wasm_global_plugins,omitempty"` // wasm config
-	BranchTransactionServicePort int `json:"branchTransactionServicePort,omitempty"`
+	Servers                      []ServerConfig       `json:"servers,omitempty"`                //server config
+	ClusterManager               ClusterManagerConfig `json:"cluster_manager,omitempty"`        //cluster config
+	CloseGraceful                bool                 `json:"close_graceful,omitempty"`         // graceful switch, default false
+	InheritOldMosnconfig         bool                 `json:"inherit_old_mosnconfig,omitempty"` // inherit old mosn config switch, default false
+	Tracing                      TracingConfig        `json:"tracing,omitempty"`
+	Metrics                      MetricsConfig        `json:"metrics,omitempty"`
+	RawDynamicResources          json.RawMessage      `json:"dynamic_resources,omitempty"` //dynamic_resources raw message
+	RawStaticResources           json.RawMessage      `json:"static_resources,omitempty"`  //static_resources raw message
+	RawAdmin                     json.RawMessage      `json:"admin,omitempty"`             // admin raw message
+	Debug                        PProfConfig          `json:"pprof,omitempty"`
+	Pid                          string               `json:"pid,omitempty"`                 // pid file
+	Plugin                       PluginConfig         `json:"plugin,omitempty"`              // plugin config
+	ThirdPartCodec               ThirdPartCodecConfig `json:"third_part_codec,omitempty"`    // third part codec config
+	Extends                      []ExtendConfig       `json:"extends,omitempty"`             // extend config
+	Wasms                        []WasmPluginConfig   `json:"wasm_global_plugins,omitempty"` // wasm config
+	BranchTransactionServicePort int                  `json:"branchTransactionServicePort,omitempty"`
 	EnforcementPolicy            struct {
 		MinTime             time.Duration `json:"minTime"`
 		PermitWithoutStream bool          `json:"permitWithoutStream"`

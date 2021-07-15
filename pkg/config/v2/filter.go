@@ -219,7 +219,6 @@ type Seata struct {
 	TCCResources     []*TCCResource     `yaml:"tccResources" json:"tccResources"`
 }
 
-
 // GetClientParameters used to config grpc connection keep alive
 func (config *Seata) GetClientParameters() keepalive.ClientParameters {
 	cp := keepalive.ClientParameters{

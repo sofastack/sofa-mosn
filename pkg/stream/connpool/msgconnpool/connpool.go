@@ -76,7 +76,7 @@ func NewConn(hostAddr string, connectTryTimes int,
 	}
 
 	p := &connpool{
-		host: host,
+		host:                      host,
 		autoReconnectWhenClose:    autoReconnectWhenClose,
 		connTryTimes:              connectTryTimes,
 		getReadFilterAndKeepalive: getReadFilterAndKeepalive,

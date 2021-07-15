@@ -33,7 +33,7 @@ func CreateFilterFactory(conf map[string]interface{}) (api.StreamFilterChainFact
 	if err != nil {
 		return nil, err
 	}
-	return &factory{config }, nil
+	return &factory{config}, nil
 }
 
 // parseConfig

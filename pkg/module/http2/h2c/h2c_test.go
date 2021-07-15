@@ -48,7 +48,7 @@ func ExampleNewHandler() {
 		fmt.Fprint(w, "Hello world")
 	})
 	h2s := &http2.Server{
-	// ...
+		// ...
 	}
 	h1s := &http.Server{
 		Addr:    ":8080",

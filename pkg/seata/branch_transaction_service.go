@@ -19,8 +19,8 @@ import (
 	"mosn.io/pkg/utils"
 )
 
-const(
-	CommitRequestPath = "tcc_commit_request_path"
+const (
+	CommitRequestPath   = "tcc_commit_request_path"
 	RollbackRequestPath = "tcc_rollback_request_path"
 )
 
@@ -43,7 +43,6 @@ func Init(branchTransactionServicePort int, kaep keepalive.EnforcementPolicy, ka
 // BranchTransactionService when global transaction commit, transaction coordinator callback to commit branch transaction,
 // when global transaction rollback, transaction coordinator callback to rollback branch transaction.
 type BranchTransactionService struct {
-
 }
 
 // BranchCommit commit branch transaction
@@ -56,7 +55,6 @@ func (svc *BranchTransactionService) BranchCommit(ctx context.Context, request *
 	}
 
 	requestContext.Decode(request.ApplicationData)
-
 
 	resp, err := doHttp1Request(requestContext, true)
 	if err != nil {
@@ -123,8 +121,8 @@ func (svc *BranchTransactionService) BranchRollback(ctx context.Context, request
 
 func doHttp1Request(requestContext *RequestContext, commit bool) (*resty.Response, error) {
 	var (
-		host string
-		path string
+		host        string
+		path        string
 		queryString string
 	)
 	host = requestContext.ActionContext[types.VarHost]
@@ -136,8 +134,8 @@ func doHttp1Request(requestContext *RequestContext, commit bool) (*resty.Respons
 
 	u := url.URL{
 		Scheme: "http",
-		Path: path,
-		Host: host,
+		Path:   path,
+		Host:   host,
 	}
 	queryString, ok := requestContext.ActionContext[types.VarQueryString]
 	if ok {

@@ -46,7 +46,7 @@ func NewFilter(conf *v2.Seata) (*filter, error) {
 		return nil, err
 	}
 
-	transactionManagerClient:= apis.NewTransactionManagerServiceClient(conn)
+	transactionManagerClient := apis.NewTransactionManagerServiceClient(conn)
 	resourceManagerClient := apis.NewResourceManagerServiceClient(conn)
 
 	f := &filter{
@@ -194,7 +194,7 @@ func (f *filter) handleHttp1BranchRegister(ctx context.Context, headers api.Head
 		Body:          buf.Clone(),
 		Trailers:      protocol.CommonHeader{},
 	}
-	host, _:= variable.GetString(ctx, types.VarHost)
+	host, _ := variable.GetString(ctx, types.VarHost)
 	requestContext.ActionContext[types.VarHost] = host
 	requestContext.ActionContext[seata.CommitRequestPath] = tccResource.CommitRequestPath
 	requestContext.ActionContext[seata.RollbackRequestPath] = tccResource.RollbackRequestPath
@@ -250,7 +250,7 @@ func (f *filter) globalBegin(ctx context.Context, name string, timeout int32) (s
 
 func (f *filter) globalCommit(ctx context.Context, xid string) error {
 	var (
-		err error
+		err    error
 		status apis.GlobalSession_GlobalStatus
 	)
 	defer func() {
@@ -275,7 +275,7 @@ func (f *filter) globalCommit(ctx context.Context, xid string) error {
 
 func (f *filter) globalRollback(ctx context.Context, xid string) error {
 	var (
-		err error
+		err    error
 		status apis.GlobalSession_GlobalStatus
 	)
 	defer func() {
@@ -344,7 +344,7 @@ func (f *filter) branchRegister(ctx context.Context, xid string, resourceID stri
 }
 
 func (f *filter) branchReport(ctx context.Context, xid string, branchID int64,
-branchType apis.BranchSession_BranchType, status apis.BranchSession_BranchStatus, applicationData []byte) error {
+	branchType apis.BranchSession_BranchType, status apis.BranchSession_BranchStatus, applicationData []byte) error {
 	request := &apis.BranchReportRequest{
 		XID:             xid,
 		BranchID:        branchID,

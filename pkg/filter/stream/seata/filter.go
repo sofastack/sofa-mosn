@@ -70,12 +70,12 @@ func NewFilter(conf *v2.Seata) (*filter, error) {
 
 func (f *filter) OnReceive(ctx context.Context, headers api.HeaderMap, buf buffer.IoBuffer, trailers api.HeaderMap) api.StreamFilterStatus {
 	if f.receiveHandler.RequestInfo().Protocol() == protocol.HTTP1 {
-		path, err := variable.GetVariableValue(ctx, types.VarPath)
+		path, err := variable.GetString(ctx, types.VarPath)
 		if err != nil {
 			log.DefaultLogger.Errorf("failed to get path, err: %v", err)
 			return api.StreamFiltertermination
 		}
-		method, err := variable.GetVariableValue(ctx, types.VarMethod)
+		method, err := variable.GetString(ctx, types.VarMethod)
 		if err != nil {
 			log.DefaultLogger.Errorf("failed to get method, err: %v", err)
 			return api.StreamFiltertermination
@@ -100,11 +100,11 @@ func (f *filter) OnReceive(ctx context.Context, headers api.HeaderMap, buf buffe
 
 func (f *filter) Append(ctx context.Context, headers api.HeaderMap, buf buffer.IoBuffer, trailers api.HeaderMap) api.StreamFilterStatus {
 	if f.receiveHandler.RequestInfo().Protocol() == protocol.HTTP1 {
-		path, err := variable.GetVariableValue(ctx, types.VarPath)
+		path, err := variable.GetString(ctx, types.VarPath)
 		if err != nil {
 			return api.StreamFilterContinue
 		}
-		method, err := variable.GetVariableValue(ctx, types.VarMethod)
+		method, err := variable.GetString(ctx, types.VarMethod)
 		if err != nil {
 			return api.StreamFilterContinue
 		}
@@ -115,7 +115,7 @@ func (f *filter) Append(ctx context.Context, headers api.HeaderMap, buf buffer.I
 
 		_, found := f.transactionInfos[strings.ToLower(path)]
 		if found {
-			xid, _ := variable.GetVariableValue(ctx, XID)
+			xid, _ := variable.GetString(ctx, XID)
 
 			header, ok := headers.(mosnhttp.ResponseHeader)
 			if ok {
@@ -135,8 +135,8 @@ func (f *filter) Append(ctx context.Context, headers api.HeaderMap, buf buffer.I
 
 		_, exists := f.tccResources[strings.ToLower(path)]
 		if exists {
-			xid, _ := variable.GetVariableValue(ctx, XID)
-			branchIDStr, _ := variable.GetVariableValue(ctx, BranchID)
+			xid, _ := variable.GetString(ctx, XID)
+			branchIDStr, _ := variable.GetString(ctx, BranchID)
 			branchID, _ := strconv.ParseInt(branchIDStr, 10, 64)
 
 			header, ok := headers.(mosnhttp.ResponseHeader)
@@ -176,7 +176,7 @@ func (f *filter) handleHttp1GlobalBegin(ctx context.Context, headers api.HeaderM
 		return api.StreamFiltertermination
 	}
 	headers.Add(XID, xid)
-	variable.SetVariableValue(ctx, XID, xid)
+	variable.Set(ctx, XID, xid)
 	return api.StreamFilterContinue
 }
 
@@ -194,11 +194,11 @@ func (f *filter) handleHttp1BranchRegister(ctx context.Context, headers api.Head
 		Body:          buf.Clone(),
 		Trailers:      protocol.CommonHeader{},
 	}
-	host, _:= variable.GetVariableValue(ctx, types.VarHost)
+	host, _:= variable.GetString(ctx, types.VarHost)
 	requestContext.ActionContext[types.VarHost] = host
 	requestContext.ActionContext[seata.CommitRequestPath] = tccResource.CommitRequestPath
 	requestContext.ActionContext[seata.RollbackRequestPath] = tccResource.RollbackRequestPath
-	queryString, _ := variable.GetVariableValue(ctx, types.VarQueryString)
+	queryString, _ := variable.GetString(ctx, types.VarQueryString)
 	if queryString != "" {
 		requestContext.ActionContext[types.VarQueryString] = queryString
 	}
@@ -227,8 +227,8 @@ func (f *filter) handleHttp1BranchRegister(ctx context.Context, headers api.Head
 		return api.StreamFiltertermination
 	}
 
-	variable.SetVariableValue(ctx, XID, xid)
-	variable.SetVariableValue(ctx, BranchID, strconv.FormatInt(branchID, 10))
+	variable.Set(ctx, XID, xid)
+	variable.Set(ctx, BranchID, strconv.FormatInt(branchID, 10))
 	return api.StreamFilterContinue
 }
 
@@ -254,7 +254,7 @@ func (f *filter) globalCommit(ctx context.Context, xid string) error {
 		status apis.GlobalSession_GlobalStatus
 	)
 	defer func() {
-		variable.SetVariableValue(ctx, XID, "")
+		variable.Set(ctx, XID, "")
 	}()
 	retry := f.conf.CommitRetryCount
 	for retry > 0 {
@@ -279,7 +279,7 @@ func (f *filter) globalRollback(ctx context.Context, xid string) error {
 		status apis.GlobalSession_GlobalStatus
 	)
 	defer func() {
-		variable.SetVariableValue(ctx, XID, "")
+		variable.Set(ctx, XID, "")
 	}()
 	retry := f.conf.RollbackRetryCount
 	for retry > 0 {

@@ -19,10 +19,12 @@ package v2
 
 import (
 	"encoding/json"
+	"time"
 
 	"github.com/c2h5oh/datasize"
 	xdsboot "github.com/envoyproxy/go-control-plane/envoy/config/bootstrap/v2"
 	"github.com/golang/protobuf/jsonpb"
+	"google.golang.org/grpc/keepalive"
 )
 
 // MOSNConfig make up mosn to start the mosn project
@@ -44,6 +46,59 @@ type MOSNConfig struct {
 	ThirdPartCodec       ThirdPartCodecConfig `json:"third_part_codec,omitempty"`    // third part codec config
 	Extends              []ExtendConfig       `json:"extends,omitempty"`             // extend config
 	Wasms                []WasmPluginConfig   `json:"wasm_global_plugins,omitempty"` // wasm config
+	BranchTransactionServicePort int `json:"branchTransactionServicePort,omitempty"`
+	EnforcementPolicy            struct {
+		MinTime             time.Duration `json:"minTime"`
+		PermitWithoutStream bool          `json:"permitWithoutStream"`
+	} `json:"enforcementPolicy"`
+
+	ServerParameters struct {
+		MaxConnectionIdle     time.Duration `json:"maxConnectionIdle"`
+		MaxConnectionAge      time.Duration `json:"maxConnectionAge"`
+		MaxConnectionAgeGrace time.Duration `json:"maxConnectionAgeGrace"`
+		Time                  time.Duration `json:"time"`
+		Timeout               time.Duration `json:"timeout"`
+	} `json:"serverParameters"`
+}
+
+// GetEnforcementPolicy used to config grpc connection keep alive
+func (c *MOSNConfig) GetEnforcementPolicy() keepalive.EnforcementPolicy {
+	ep := keepalive.EnforcementPolicy{
+		MinTime:             5 * time.Second,
+		PermitWithoutStream: true,
+	}
+	if c.EnforcementPolicy.MinTime > 0 {
+		ep.MinTime = c.EnforcementPolicy.MinTime
+	}
+	ep.PermitWithoutStream = c.EnforcementPolicy.PermitWithoutStream
+	return ep
+}
+
+// GetServerParameters used to config grpc connection keep alive
+func (c *MOSNConfig) GetServerParameters() keepalive.ServerParameters {
+	sp := keepalive.ServerParameters{
+		MaxConnectionIdle:     15 * time.Second,
+		MaxConnectionAge:      30 * time.Second,
+		MaxConnectionAgeGrace: 5 * time.Second,
+		Time:                  5 * time.Second,
+		Timeout:               time.Second,
+	}
+	if c.ServerParameters.MaxConnectionIdle > 0 {
+		sp.MaxConnectionIdle = c.ServerParameters.MaxConnectionIdle
+	}
+	if c.ServerParameters.MaxConnectionAge > 0 {
+		sp.MaxConnectionAge = c.ServerParameters.MaxConnectionAge
+	}
+	if c.ServerParameters.MaxConnectionAgeGrace > 0 {
+		sp.MaxConnectionAgeGrace = c.ServerParameters.MaxConnectionAgeGrace
+	}
+	if c.ServerParameters.Time > 0 {
+		sp.Time = c.ServerParameters.Time
+	}
+	if c.ServerParameters.Timeout > 0 {
+		sp.Timeout = c.ServerParameters.Timeout
+	}
+	return sp
 }
 
 // PProfConfig is used to start a pprof server for debug

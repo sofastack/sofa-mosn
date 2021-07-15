@@ -28,6 +28,7 @@ import (
 	"mosn.io/mosn/pkg/log"
 	"mosn.io/mosn/pkg/network"
 	"mosn.io/mosn/pkg/router"
+	"mosn.io/mosn/pkg/seata"
 	"mosn.io/mosn/pkg/server"
 	"mosn.io/mosn/pkg/types"
 	"mosn.io/mosn/pkg/upstream/cluster"
@@ -208,6 +209,10 @@ func (m *Mosn) initServer() {
 			}
 		}
 		m.servers = append(m.servers, srv)
+	}
+
+	if c.BranchTransactionServicePort > 0 {
+		seata.Init(c.BranchTransactionServicePort, c.GetEnforcementPolicy(), c.GetServerParameters())
 	}
 }
 

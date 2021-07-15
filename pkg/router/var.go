@@ -24,7 +24,8 @@ import (
 
 var (
 	builtinVariables = []variable.Variable{
-		variable.NewStringVariable(types.VarInternalRouterCluster, nil, nil, variable.DefaultStringSetter, 0),
+		// value type of VarRouterMeta should be map[string]string
+		variable.NewVariable(types.VarRouterMeta, nil, nil, variable.DefaultSetter, 0),
 	}
 )
 

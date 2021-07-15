@@ -504,7 +504,7 @@ istio.io/gogo-genproto/googleapis/google/rpc
 # k8s.io/klog v1.0.0
 ## explicit
 k8s.io/klog
-# mosn.io/api v0.0.0-20210701111239-effaddc56128
+# mosn.io/api v0.0.0-20210714065837-5b4c2d66e70c
 ## explicit
 mosn.io/api
 # mosn.io/pkg v0.0.0-20210604065522-6e8f5a087814

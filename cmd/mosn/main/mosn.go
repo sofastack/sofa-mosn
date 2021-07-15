@@ -36,6 +36,7 @@ import (
 	_ "mosn.io/mosn/pkg/filter/stream/faulttolerance"
 	_ "mosn.io/mosn/pkg/filter/stream/flowcontrol"
 	_ "mosn.io/mosn/pkg/filter/stream/gzip"
+	_ "mosn.io/mosn/pkg/filter/stream/headertometadata"
 	_ "mosn.io/mosn/pkg/filter/stream/jwtauthn"
 	_ "mosn.io/mosn/pkg/filter/stream/mirror"
 	_ "mosn.io/mosn/pkg/filter/stream/mixer"

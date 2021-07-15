@@ -67,7 +67,7 @@ const (
 
 // [Route]: internal
 const (
-	VarInternalRouterCluster string = "x-mosn-router-cluster"
+	VarRouterMeta string = "x-mosn-router-meta"
 )
 
 // [Protocol]: common

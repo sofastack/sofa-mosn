@@ -234,7 +234,7 @@ type configImpl struct {
 func NewMetadataMatchCriteriaImpl(metadataMatches map[string]string) *MetadataMatchCriteriaImpl {
 
 	metadataMatchCriteriaImpl := &MetadataMatchCriteriaImpl{}
-	metadataMatchCriteriaImpl.extractMetadataMatchCriteria(nil, metadataMatches)
+	metadataMatchCriteriaImpl.merge(nil, metadataMatches)
 
 	return metadataMatchCriteriaImpl
 }
@@ -252,8 +252,9 @@ func (mmcti *MetadataMatchCriteriaImpl) MetadataMatchCriteria() []api.MetadataMa
 
 // MergeMatchCriteria
 // No usage currently
-func (mmcti *MetadataMatchCriteriaImpl) MergeMatchCriteria(metadataMatches map[string]interface{}) api.MetadataMatchCriteria {
-	return nil
+func (mmcti *MetadataMatchCriteriaImpl) MergeMatchCriteria(metadataMatches map[string]string) api.MetadataMatchCriteria {
+	mmcti.merge(mmcti, metadataMatches)
+	return mmcti
 }
 
 func (mmcti *MetadataMatchCriteriaImpl) Len() int {
@@ -270,8 +271,7 @@ func (mmcti *MetadataMatchCriteriaImpl) Swap(i, j int) {
 }
 
 // Used to generate metadata match criteria from config
-func (mmcti *MetadataMatchCriteriaImpl) extractMetadataMatchCriteria(parent *MetadataMatchCriteriaImpl,
-	metadataMatches map[string]string) {
+func (mmcti *MetadataMatchCriteriaImpl) merge(parent *MetadataMatchCriteriaImpl, metadataMatches map[string]string) {
 
 	var mdMatchCriteria []api.MetadataMatchCriterion
 	// used to record key and its index for o(1) searching

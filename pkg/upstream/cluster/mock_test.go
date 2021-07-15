@@ -291,7 +291,7 @@ func (mmcti *MockMetadataMatchCriteriaImpl) extractMetadataMatchCriteria(parent 
 
 // MergeMatchCriteria
 // No usage currently
-func (mmcti *MockMetadataMatchCriteriaImpl) MergeMatchCriteria(metadataMatches map[string]interface{}) api.MetadataMatchCriteria {
+func (mmcti *MockMetadataMatchCriteriaImpl) MergeMatchCriteria(metadataMatches map[string]string) api.MetadataMatchCriteria {
 	return nil
 }
 

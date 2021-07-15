@@ -180,7 +180,7 @@ type MetadataMatchCriteria interface {
 	// to be matched against upstream endpoints when load balancing
 	MetadataMatchCriteria() []MetadataMatchCriterion
 
-	MergeMatchCriteria(metadataMatches map[string]interface{}) MetadataMatchCriteria
+	MergeMatchCriteria(metadataMatches map[string]string) MetadataMatchCriteria
 }
 
 // PathMatchType defines the path match pattern

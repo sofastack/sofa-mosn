@@ -101,7 +101,7 @@ func gomockRouteMatchCluster(ctrl *gomock.Controller, cluster_name string) api.R
 	// mock route rule returns cluster name : mock_cluster
 	r.EXPECT().RouteRule().DoAndReturn(func() api.RouteRule {
 		rule := mock.NewMockRouteRule(ctrl)
-		rule.EXPECT().ClusterName(context.TODO()).Return(cluster_name).AnyTimes()
+		rule.EXPECT().ClusterName(gomock.Any()).Return(cluster_name).AnyTimes()
 		rule.EXPECT().UpstreamProtocol().Return("").AnyTimes()
 		rule.EXPECT().GlobalTimeout().Return(300 * time.Second).AnyTimes()
 		rule.EXPECT().Policy().DoAndReturn(func() api.Policy {

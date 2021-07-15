@@ -22,20 +22,19 @@ import (
 	"testing"
 	"time"
 
-	"mosn.io/mosn/pkg/router"
-	"mosn.io/mosn/pkg/variable"
-
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
-
 	"mosn.io/api"
 	v2 "mosn.io/mosn/pkg/config/v2"
+	mosnctx "mosn.io/mosn/pkg/context"
+	"mosn.io/mosn/pkg/mock"
 	"mosn.io/mosn/pkg/network"
 	"mosn.io/mosn/pkg/protocol"
+	"mosn.io/mosn/pkg/router"
 	"mosn.io/mosn/pkg/trace"
 	"mosn.io/mosn/pkg/types"
+	"mosn.io/mosn/pkg/variable"
 	"mosn.io/pkg/buffer"
-
-	mosnctx "mosn.io/mosn/pkg/context"
 )
 
 func TestDownstream_FinishTracing_NotEnable(t *testing.T) {
@@ -351,4 +350,36 @@ func TestProcessError(t *testing.T) {
 	if p != types.ChooseHost || e != types.ErrExit {
 		t.Errorf("TestprocessError Error")
 	}
+}
+
+func TestMetadataMatchCriteria(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	ctx := variable.NewVariableContext(context.Background())
+
+	cluster := mock.NewMockClusterInfo(ctrl)
+	cluster.EXPECT().Name().AnyTimes()
+
+	routeEntry := mock.NewMockRouteRule(ctrl)
+	routeEntryMeta := router.NewMetadataMatchCriteriaImpl(map[string]string{
+		"a": "b",
+		"b": "bb",
+	})
+	routeEntry.EXPECT().MetadataMatchCriteria(gomock.Any()).AnyTimes().Return(routeEntryMeta)
+
+	requestInfo := &network.RequestInfo{}
+	requestInfo.SetRouteEntry(routeEntry)
+
+	s := &downStream{
+		context:     ctx,
+		requestInfo: requestInfo,
+		cluster:     cluster,
+	}
+
+	assert.Equal(t, s.MetadataMatchCriteria(), routeEntryMeta)
+
+	variable.Set(ctx, types.VarRouterMeta, map[string]string{"a": "aa"})
+	assert.Equal(t, len(s.MetadataMatchCriteria().MetadataMatchCriteria()), 2)
+	assert.Equal(t, s.MetadataMatchCriteria().MetadataMatchCriteria()[0].MetadataValue(), "aa")
 }

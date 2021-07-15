@@ -38,6 +38,7 @@ import (
 	"mosn.io/mosn/pkg/log"
 	"mosn.io/mosn/pkg/protocol"
 	"mosn.io/mosn/pkg/protocol/http"
+	"mosn.io/mosn/pkg/router"
 	"mosn.io/mosn/pkg/trace"
 	"mosn.io/mosn/pkg/track"
 	"mosn.io/mosn/pkg/types"
@@ -696,6 +697,11 @@ func (s *downStream) matchRoute() {
 	routers := s.proxy.routersWrapper.GetRouters()
 	// call route handler to get route info
 	s.snapshot, s.route = s.proxy.routeHandlerFactory.DoRouteHandler(s.context, headers, routers, s.proxy.clusterManager)
+
+	// set RouteEntry so that it can be accessed in stream filters of api.AfterRoute phase.
+	if s.route != nil {
+		s.requestInfo.SetRouteEntry(s.route.RouteRule())
+	}
 }
 
 func (s *downStream) convertProtocol() (dp, up types.ProtocolName) {
@@ -839,7 +845,6 @@ func (s *downStream) chooseHost(endStream bool) {
 	}
 
 	s.cluster = s.snapshot.ClusterInfo()
-	s.requestInfo.SetRouteEntry(s.route.RouteRule())
 
 	host, pool, err := s.initializeUpstreamConnectionPool(s)
 	if err != nil {
@@ -1480,11 +1485,31 @@ func (s *downStream) setBufferLimit(bufferLimit uint32) {
 
 // types.LoadBalancerContext
 func (s *downStream) MetadataMatchCriteria() api.MetadataMatchCriteria {
-	if nil != s.requestInfo.RouteEntry() {
-		return s.requestInfo.RouteEntry().MetadataMatchCriteria(s.cluster.Name())
+	var varMeta map[string]string
+	if v, err := variable.Get(s.context, types.VarRouterMeta); err == nil && v != nil {
+		if m, ok := v.(map[string]string); ok {
+			varMeta = m
+		}
 	}
 
-	return nil
+	var routerMeta api.MetadataMatchCriteria
+	if s.requestInfo.RouteEntry() != nil {
+		routerMeta = s.requestInfo.RouteEntry().MetadataMatchCriteria(s.cluster.Name())
+	}
+
+	if varMeta == nil {
+		return routerMeta
+	}
+
+	if routerMeta != nil {
+		for _, kv := range routerMeta.MetadataMatchCriteria() {
+			if _, ok := varMeta[kv.MetadataKeyName()]; !ok {
+				varMeta[kv.MetadataKeyName()] = kv.MetadataValue()
+			}
+		}
+	}
+
+	return router.NewMetadataMatchCriteriaImpl(varMeta)
 }
 
 func (s *downStream) DownstreamConnection() net.Conn {

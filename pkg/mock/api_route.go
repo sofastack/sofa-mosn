@@ -6,11 +6,10 @@ package mock
 
 import (
 	context "context"
-	reflect "reflect"
-	time "time"
-
 	gomock "github.com/golang/mock/gomock"
 	api "mosn.io/api"
+	reflect "reflect"
+	time "time"
 )
 
 // MockRoute is a mock of Route interface.
@@ -34,6 +33,20 @@ func NewMockRoute(ctrl *gomock.Controller) *MockRoute {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockRoute) EXPECT() *MockRouteMockRecorder {
 	return m.recorder
+}
+
+// RouteRule mocks base method.
+func (m *MockRoute) RouteRule() api.RouteRule {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RouteRule")
+	ret0, _ := ret[0].(api.RouteRule)
+	return ret0
+}
+
+// RouteRule indicates an expected call of RouteRule.
+func (mr *MockRouteMockRecorder) RouteRule() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RouteRule", reflect.TypeOf((*MockRoute)(nil).RouteRule))
 }
 
 // DirectResponseRule mocks base method.
@@ -64,20 +77,6 @@ func (mr *MockRouteMockRecorder) RedirectRule() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RedirectRule", reflect.TypeOf((*MockRoute)(nil).RedirectRule))
 }
 
-// RouteRule mocks base method.
-func (m *MockRoute) RouteRule() api.RouteRule {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RouteRule")
-	ret0, _ := ret[0].(api.RouteRule)
-	return ret0
-}
-
-// RouteRule indicates an expected call of RouteRule.
-func (mr *MockRouteMockRecorder) RouteRule() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RouteRule", reflect.TypeOf((*MockRoute)(nil).RouteRule))
-}
-
 // MockRouteRule is a mock of RouteRule interface.
 type MockRouteRule struct {
 	ctrl     *gomock.Controller
@@ -101,18 +100,102 @@ func (m *MockRouteRule) EXPECT() *MockRouteRuleMockRecorder {
 	return m.recorder
 }
 
-// ClusterName mocks base method.
-func (m *MockRouteRule) ClusterName(context.Context) string {
+// VirtualHost mocks base method.
+func (m *MockRouteRule) VirtualHost() api.VirtualHost {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ClusterName")
+	ret := m.ctrl.Call(m, "VirtualHost")
+	ret0, _ := ret[0].(api.VirtualHost)
+	return ret0
+}
+
+// VirtualHost indicates an expected call of VirtualHost.
+func (mr *MockRouteRuleMockRecorder) VirtualHost() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VirtualHost", reflect.TypeOf((*MockRouteRule)(nil).VirtualHost))
+}
+
+// ClusterName mocks base method.
+func (m *MockRouteRule) ClusterName(ctx context.Context) string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ClusterName", ctx)
 	ret0, _ := ret[0].(string)
 	return ret0
 }
 
 // ClusterName indicates an expected call of ClusterName.
-func (mr *MockRouteRuleMockRecorder) ClusterName(context.Context) *gomock.Call {
+func (mr *MockRouteRuleMockRecorder) ClusterName(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ClusterName", reflect.TypeOf((*MockRouteRule)(nil).ClusterName))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ClusterName", reflect.TypeOf((*MockRouteRule)(nil).ClusterName), ctx)
+}
+
+// UpstreamProtocol mocks base method.
+func (m *MockRouteRule) UpstreamProtocol() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpstreamProtocol")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// UpstreamProtocol indicates an expected call of UpstreamProtocol.
+func (mr *MockRouteRuleMockRecorder) UpstreamProtocol() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpstreamProtocol", reflect.TypeOf((*MockRouteRule)(nil).UpstreamProtocol))
+}
+
+// GlobalTimeout mocks base method.
+func (m *MockRouteRule) GlobalTimeout() time.Duration {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GlobalTimeout")
+	ret0, _ := ret[0].(time.Duration)
+	return ret0
+}
+
+// GlobalTimeout indicates an expected call of GlobalTimeout.
+func (mr *MockRouteRuleMockRecorder) GlobalTimeout() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GlobalTimeout", reflect.TypeOf((*MockRouteRule)(nil).GlobalTimeout))
+}
+
+// Policy mocks base method.
+func (m *MockRouteRule) Policy() api.Policy {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Policy")
+	ret0, _ := ret[0].(api.Policy)
+	return ret0
+}
+
+// Policy indicates an expected call of Policy.
+func (mr *MockRouteRuleMockRecorder) Policy() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Policy", reflect.TypeOf((*MockRouteRule)(nil).Policy))
+}
+
+// MetadataMatchCriteria mocks base method.
+func (m *MockRouteRule) MetadataMatchCriteria(clusterName string) api.MetadataMatchCriteria {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MetadataMatchCriteria", clusterName)
+	ret0, _ := ret[0].(api.MetadataMatchCriteria)
+	return ret0
+}
+
+// MetadataMatchCriteria indicates an expected call of MetadataMatchCriteria.
+func (mr *MockRouteRuleMockRecorder) MetadataMatchCriteria(clusterName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MetadataMatchCriteria", reflect.TypeOf((*MockRouteRule)(nil).MetadataMatchCriteria), clusterName)
+}
+
+// PerFilterConfig mocks base method.
+func (m *MockRouteRule) PerFilterConfig() map[string]interface{} {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PerFilterConfig")
+	ret0, _ := ret[0].(map[string]interface{})
+	return ret0
+}
+
+// PerFilterConfig indicates an expected call of PerFilterConfig.
+func (mr *MockRouteRuleMockRecorder) PerFilterConfig() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PerFilterConfig", reflect.TypeOf((*MockRouteRule)(nil).PerFilterConfig))
 }
 
 // FinalizeRequestHeaders mocks base method.
@@ -139,48 +222,6 @@ func (mr *MockRouteRuleMockRecorder) FinalizeResponseHeaders(ctx, headers, reque
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FinalizeResponseHeaders", reflect.TypeOf((*MockRouteRule)(nil).FinalizeResponseHeaders), ctx, headers, requestInfo)
 }
 
-// GlobalTimeout mocks base method.
-func (m *MockRouteRule) GlobalTimeout() time.Duration {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GlobalTimeout")
-	ret0, _ := ret[0].(time.Duration)
-	return ret0
-}
-
-// GlobalTimeout indicates an expected call of GlobalTimeout.
-func (mr *MockRouteRuleMockRecorder) GlobalTimeout() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GlobalTimeout", reflect.TypeOf((*MockRouteRule)(nil).GlobalTimeout))
-}
-
-// HeaderMatchCriteria mocks base method.
-func (m *MockRouteRule) HeaderMatchCriteria() api.KeyValueMatchCriteria {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "HeaderMatchCriteria")
-	ret0, _ := ret[0].(api.KeyValueMatchCriteria)
-	return ret0
-}
-
-// HeaderMatchCriteria indicates an expected call of HeaderMatchCriteria.
-func (mr *MockRouteRuleMockRecorder) HeaderMatchCriteria() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HeaderMatchCriteria", reflect.TypeOf((*MockRouteRule)(nil).HeaderMatchCriteria))
-}
-
-// MetadataMatchCriteria mocks base method.
-func (m *MockRouteRule) MetadataMatchCriteria(clusterName string) api.MetadataMatchCriteria {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "MetadataMatchCriteria", clusterName)
-	ret0, _ := ret[0].(api.MetadataMatchCriteria)
-	return ret0
-}
-
-// MetadataMatchCriteria indicates an expected call of MetadataMatchCriteria.
-func (mr *MockRouteRuleMockRecorder) MetadataMatchCriteria(clusterName interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MetadataMatchCriteria", reflect.TypeOf((*MockRouteRule)(nil).MetadataMatchCriteria), clusterName)
-}
-
 // PathMatchCriterion mocks base method.
 func (m *MockRouteRule) PathMatchCriterion() api.PathMatchCriterion {
 	m.ctrl.T.Helper()
@@ -195,60 +236,18 @@ func (mr *MockRouteRuleMockRecorder) PathMatchCriterion() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PathMatchCriterion", reflect.TypeOf((*MockRouteRule)(nil).PathMatchCriterion))
 }
 
-// PerFilterConfig mocks base method.
-func (m *MockRouteRule) PerFilterConfig() map[string]interface{} {
+// HeaderMatchCriteria mocks base method.
+func (m *MockRouteRule) HeaderMatchCriteria() api.KeyValueMatchCriteria {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PerFilterConfig")
-	ret0, _ := ret[0].(map[string]interface{})
+	ret := m.ctrl.Call(m, "HeaderMatchCriteria")
+	ret0, _ := ret[0].(api.KeyValueMatchCriteria)
 	return ret0
 }
 
-// PerFilterConfig indicates an expected call of PerFilterConfig.
-func (mr *MockRouteRuleMockRecorder) PerFilterConfig() *gomock.Call {
+// HeaderMatchCriteria indicates an expected call of HeaderMatchCriteria.
+func (mr *MockRouteRuleMockRecorder) HeaderMatchCriteria() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PerFilterConfig", reflect.TypeOf((*MockRouteRule)(nil).PerFilterConfig))
-}
-
-// Policy mocks base method.
-func (m *MockRouteRule) Policy() api.Policy {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Policy")
-	ret0, _ := ret[0].(api.Policy)
-	return ret0
-}
-
-// Policy indicates an expected call of Policy.
-func (mr *MockRouteRuleMockRecorder) Policy() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Policy", reflect.TypeOf((*MockRouteRule)(nil).Policy))
-}
-
-// UpstreamProtocol mocks base method.
-func (m *MockRouteRule) UpstreamProtocol() string {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpstreamProtocol")
-	ret0, _ := ret[0].(string)
-	return ret0
-}
-
-// UpstreamProtocol indicates an expected call of UpstreamProtocol.
-func (mr *MockRouteRuleMockRecorder) UpstreamProtocol() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpstreamProtocol", reflect.TypeOf((*MockRouteRule)(nil).UpstreamProtocol))
-}
-
-// VirtualHost mocks base method.
-func (m *MockRouteRule) VirtualHost() api.VirtualHost {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "VirtualHost")
-	ret0, _ := ret[0].(api.VirtualHost)
-	return ret0
-}
-
-// VirtualHost indicates an expected call of VirtualHost.
-func (mr *MockRouteRuleMockRecorder) VirtualHost() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VirtualHost", reflect.TypeOf((*MockRouteRule)(nil).VirtualHost))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HeaderMatchCriteria", reflect.TypeOf((*MockRouteRule)(nil).HeaderMatchCriteria))
 }
 
 // MockVirtualHost is a mock of VirtualHost interface.
@@ -274,6 +273,62 @@ func (m *MockVirtualHost) EXPECT() *MockVirtualHostMockRecorder {
 	return m.recorder
 }
 
+// Name mocks base method.
+func (m *MockVirtualHost) Name() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Name")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// Name indicates an expected call of Name.
+func (mr *MockVirtualHostMockRecorder) Name() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Name", reflect.TypeOf((*MockVirtualHost)(nil).Name))
+}
+
+// GetRouteFromEntries mocks base method.
+func (m *MockVirtualHost) GetRouteFromEntries(ctx context.Context, headers api.HeaderMap) api.Route {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetRouteFromEntries", ctx, headers)
+	ret0, _ := ret[0].(api.Route)
+	return ret0
+}
+
+// GetRouteFromEntries indicates an expected call of GetRouteFromEntries.
+func (mr *MockVirtualHostMockRecorder) GetRouteFromEntries(ctx, headers interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRouteFromEntries", reflect.TypeOf((*MockVirtualHost)(nil).GetRouteFromEntries), ctx, headers)
+}
+
+// GetAllRoutesFromEntries mocks base method.
+func (m *MockVirtualHost) GetAllRoutesFromEntries(ctx context.Context, headers api.HeaderMap) []api.Route {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAllRoutesFromEntries", ctx, headers)
+	ret0, _ := ret[0].([]api.Route)
+	return ret0
+}
+
+// GetAllRoutesFromEntries indicates an expected call of GetAllRoutesFromEntries.
+func (mr *MockVirtualHostMockRecorder) GetAllRoutesFromEntries(ctx, headers interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllRoutesFromEntries", reflect.TypeOf((*MockVirtualHost)(nil).GetAllRoutesFromEntries), ctx, headers)
+}
+
+// GetRouteFromHeaderKV mocks base method.
+func (m *MockVirtualHost) GetRouteFromHeaderKV(key, value string) api.Route {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetRouteFromHeaderKV", key, value)
+	ret0, _ := ret[0].(api.Route)
+	return ret0
+}
+
+// GetRouteFromHeaderKV indicates an expected call of GetRouteFromHeaderKV.
+func (mr *MockVirtualHostMockRecorder) GetRouteFromHeaderKV(key, value interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRouteFromHeaderKV", reflect.TypeOf((*MockVirtualHost)(nil).GetRouteFromHeaderKV), key, value)
+}
+
 // AddRoute mocks base method.
 func (m *MockVirtualHost) AddRoute(route api.RouteBase) error {
 	m.ctrl.T.Helper()
@@ -286,6 +341,32 @@ func (m *MockVirtualHost) AddRoute(route api.RouteBase) error {
 func (mr *MockVirtualHostMockRecorder) AddRoute(route interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddRoute", reflect.TypeOf((*MockVirtualHost)(nil).AddRoute), route)
+}
+
+// RemoveAllRoutes mocks base method.
+func (m *MockVirtualHost) RemoveAllRoutes() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "RemoveAllRoutes")
+}
+
+// RemoveAllRoutes indicates an expected call of RemoveAllRoutes.
+func (mr *MockVirtualHostMockRecorder) RemoveAllRoutes() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveAllRoutes", reflect.TypeOf((*MockVirtualHost)(nil).RemoveAllRoutes))
+}
+
+// PerFilterConfig mocks base method.
+func (m *MockVirtualHost) PerFilterConfig() map[string]interface{} {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PerFilterConfig")
+	ret0, _ := ret[0].(map[string]interface{})
+	return ret0
+}
+
+// PerFilterConfig indicates an expected call of PerFilterConfig.
+func (mr *MockVirtualHostMockRecorder) PerFilterConfig() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PerFilterConfig", reflect.TypeOf((*MockVirtualHost)(nil).PerFilterConfig))
 }
 
 // FinalizeRequestHeaders mocks base method.
@@ -312,88 +393,6 @@ func (mr *MockVirtualHostMockRecorder) FinalizeResponseHeaders(ctx, headers, req
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FinalizeResponseHeaders", reflect.TypeOf((*MockVirtualHost)(nil).FinalizeResponseHeaders), ctx, headers, requestInfo)
 }
 
-// GetAllRoutesFromEntries mocks base method.
-func (m *MockVirtualHost) GetAllRoutesFromEntries(ctx context.Context, headers api.HeaderMap) []api.Route {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAllRoutesFromEntries", ctx, headers)
-	ret0, _ := ret[0].([]api.Route)
-	return ret0
-}
-
-// GetAllRoutesFromEntries indicates an expected call of GetAllRoutesFromEntries.
-func (mr *MockVirtualHostMockRecorder) GetAllRoutesFromEntries(ctx, headers interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllRoutesFromEntries", reflect.TypeOf((*MockVirtualHost)(nil).GetAllRoutesFromEntries), ctx, headers)
-}
-
-// GetRouteFromEntries mocks base method.
-func (m *MockVirtualHost) GetRouteFromEntries(ctx context.Context, headers api.HeaderMap) api.Route {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetRouteFromEntries", ctx, headers)
-	ret0, _ := ret[0].(api.Route)
-	return ret0
-}
-
-// GetRouteFromEntries indicates an expected call of GetRouteFromEntries.
-func (mr *MockVirtualHostMockRecorder) GetRouteFromEntries(ctx, headers interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRouteFromEntries", reflect.TypeOf((*MockVirtualHost)(nil).GetRouteFromEntries), ctx, headers)
-}
-
-// GetRouteFromHeaderKV mocks base method.
-func (m *MockVirtualHost) GetRouteFromHeaderKV(key, value string) api.Route {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetRouteFromHeaderKV", key, value)
-	ret0, _ := ret[0].(api.Route)
-	return ret0
-}
-
-// GetRouteFromHeaderKV indicates an expected call of GetRouteFromHeaderKV.
-func (mr *MockVirtualHostMockRecorder) GetRouteFromHeaderKV(key, value interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRouteFromHeaderKV", reflect.TypeOf((*MockVirtualHost)(nil).GetRouteFromHeaderKV), key, value)
-}
-
-// Name mocks base method.
-func (m *MockVirtualHost) Name() string {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Name")
-	ret0, _ := ret[0].(string)
-	return ret0
-}
-
-// Name indicates an expected call of Name.
-func (mr *MockVirtualHostMockRecorder) Name() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Name", reflect.TypeOf((*MockVirtualHost)(nil).Name))
-}
-
-// PerFilterConfig mocks base method.
-func (m *MockVirtualHost) PerFilterConfig() map[string]interface{} {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PerFilterConfig")
-	ret0, _ := ret[0].(map[string]interface{})
-	return ret0
-}
-
-// PerFilterConfig indicates an expected call of PerFilterConfig.
-func (mr *MockVirtualHostMockRecorder) PerFilterConfig() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PerFilterConfig", reflect.TypeOf((*MockVirtualHost)(nil).PerFilterConfig))
-}
-
-// RemoveAllRoutes mocks base method.
-func (m *MockVirtualHost) RemoveAllRoutes() {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "RemoveAllRoutes")
-}
-
-// RemoveAllRoutes indicates an expected call of RemoveAllRoutes.
-func (mr *MockVirtualHostMockRecorder) RemoveAllRoutes() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveAllRoutes", reflect.TypeOf((*MockVirtualHost)(nil).RemoveAllRoutes))
-}
-
 // MockPolicy is a mock of Policy interface.
 type MockPolicy struct {
 	ctrl     *gomock.Controller
@@ -415,34 +414,6 @@ func NewMockPolicy(ctrl *gomock.Controller) *MockPolicy {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockPolicy) EXPECT() *MockPolicyMockRecorder {
 	return m.recorder
-}
-
-// HashPolicy mocks base method.
-func (m *MockPolicy) HashPolicy() api.HashPolicy {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "HashPolicy")
-	ret0, _ := ret[0].(api.HashPolicy)
-	return ret0
-}
-
-// HashPolicy indicates an expected call of HashPolicy.
-func (mr *MockPolicyMockRecorder) HashPolicy() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HashPolicy", reflect.TypeOf((*MockPolicy)(nil).HashPolicy))
-}
-
-// MirrorPolicy mocks base method.
-func (m *MockPolicy) MirrorPolicy() api.MirrorPolicy {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "MirrorPolicy")
-	ret0, _ := ret[0].(api.MirrorPolicy)
-	return ret0
-}
-
-// MirrorPolicy indicates an expected call of MirrorPolicy.
-func (mr *MockPolicyMockRecorder) MirrorPolicy() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MirrorPolicy", reflect.TypeOf((*MockPolicy)(nil).MirrorPolicy))
 }
 
 // RetryPolicy mocks base method.
@@ -473,6 +444,34 @@ func (mr *MockPolicyMockRecorder) ShadowPolicy() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ShadowPolicy", reflect.TypeOf((*MockPolicy)(nil).ShadowPolicy))
 }
 
+// HashPolicy mocks base method.
+func (m *MockPolicy) HashPolicy() api.HashPolicy {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HashPolicy")
+	ret0, _ := ret[0].(api.HashPolicy)
+	return ret0
+}
+
+// HashPolicy indicates an expected call of HashPolicy.
+func (mr *MockPolicyMockRecorder) HashPolicy() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HashPolicy", reflect.TypeOf((*MockPolicy)(nil).HashPolicy))
+}
+
+// MirrorPolicy mocks base method.
+func (m *MockPolicy) MirrorPolicy() api.MirrorPolicy {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MirrorPolicy")
+	ret0, _ := ret[0].(api.MirrorPolicy)
+	return ret0
+}
+
+// MirrorPolicy indicates an expected call of MirrorPolicy.
+func (mr *MockPolicyMockRecorder) MirrorPolicy() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MirrorPolicy", reflect.TypeOf((*MockPolicy)(nil).MirrorPolicy))
+}
+
 // MockRetryPolicy is a mock of RetryPolicy interface.
 type MockRetryPolicy struct {
 	ctrl     *gomock.Controller
@@ -494,20 +493,6 @@ func NewMockRetryPolicy(ctrl *gomock.Controller) *MockRetryPolicy {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockRetryPolicy) EXPECT() *MockRetryPolicyMockRecorder {
 	return m.recorder
-}
-
-// NumRetries mocks base method.
-func (m *MockRetryPolicy) NumRetries() uint32 {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "NumRetries")
-	ret0, _ := ret[0].(uint32)
-	return ret0
-}
-
-// NumRetries indicates an expected call of NumRetries.
-func (mr *MockRetryPolicyMockRecorder) NumRetries() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NumRetries", reflect.TypeOf((*MockRetryPolicy)(nil).NumRetries))
 }
 
 // RetryOn mocks base method.
@@ -536,6 +521,20 @@ func (m *MockRetryPolicy) TryTimeout() time.Duration {
 func (mr *MockRetryPolicyMockRecorder) TryTimeout() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TryTimeout", reflect.TypeOf((*MockRetryPolicy)(nil).TryTimeout))
+}
+
+// NumRetries mocks base method.
+func (m *MockRetryPolicy) NumRetries() uint32 {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "NumRetries")
+	ret0, _ := ret[0].(uint32)
+	return ret0
+}
+
+// NumRetries indicates an expected call of NumRetries.
+func (mr *MockRetryPolicyMockRecorder) NumRetries() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NumRetries", reflect.TypeOf((*MockRetryPolicy)(nil).NumRetries))
 }
 
 // MockRetryState is a mock of RetryState interface.
@@ -663,20 +662,6 @@ func (m *MockDirectResponseRule) EXPECT() *MockDirectResponseRuleMockRecorder {
 	return m.recorder
 }
 
-// Body mocks base method.
-func (m *MockDirectResponseRule) Body() string {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Body")
-	ret0, _ := ret[0].(string)
-	return ret0
-}
-
-// Body indicates an expected call of Body.
-func (mr *MockDirectResponseRuleMockRecorder) Body() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Body", reflect.TypeOf((*MockDirectResponseRule)(nil).Body))
-}
-
 // StatusCode mocks base method.
 func (m *MockDirectResponseRule) StatusCode() int {
 	m.ctrl.T.Helper()
@@ -689,6 +674,20 @@ func (m *MockDirectResponseRule) StatusCode() int {
 func (mr *MockDirectResponseRuleMockRecorder) StatusCode() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StatusCode", reflect.TypeOf((*MockDirectResponseRule)(nil).StatusCode))
+}
+
+// Body mocks base method.
+func (m *MockDirectResponseRule) Body() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Body")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// Body indicates an expected call of Body.
+func (mr *MockDirectResponseRuleMockRecorder) Body() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Body", reflect.TypeOf((*MockDirectResponseRule)(nil).Body))
 }
 
 // MockRedirectRule is a mock of RedirectRule interface.
@@ -728,20 +727,6 @@ func (mr *MockRedirectRuleMockRecorder) RedirectCode() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RedirectCode", reflect.TypeOf((*MockRedirectRule)(nil).RedirectCode))
 }
 
-// RedirectHost mocks base method.
-func (m *MockRedirectRule) RedirectHost() string {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RedirectHost")
-	ret0, _ := ret[0].(string)
-	return ret0
-}
-
-// RedirectHost indicates an expected call of RedirectHost.
-func (mr *MockRedirectRuleMockRecorder) RedirectHost() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RedirectHost", reflect.TypeOf((*MockRedirectRule)(nil).RedirectHost))
-}
-
 // RedirectPath mocks base method.
 func (m *MockRedirectRule) RedirectPath() string {
 	m.ctrl.T.Helper()
@@ -754,6 +739,20 @@ func (m *MockRedirectRule) RedirectPath() string {
 func (mr *MockRedirectRuleMockRecorder) RedirectPath() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RedirectPath", reflect.TypeOf((*MockRedirectRule)(nil).RedirectPath))
+}
+
+// RedirectHost mocks base method.
+func (m *MockRedirectRule) RedirectHost() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RedirectHost")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// RedirectHost indicates an expected call of RedirectHost.
+func (mr *MockRedirectRuleMockRecorder) RedirectHost() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RedirectHost", reflect.TypeOf((*MockRedirectRule)(nil).RedirectHost))
 }
 
 // RedirectScheme mocks base method.
@@ -844,20 +843,6 @@ func (m *MockMetadataMatchCriteria) EXPECT() *MockMetadataMatchCriteriaMockRecor
 	return m.recorder
 }
 
-// MergeMatchCriteria mocks base method.
-func (m *MockMetadataMatchCriteria) MergeMatchCriteria(metadataMatches map[string]interface{}) api.MetadataMatchCriteria {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "MergeMatchCriteria", metadataMatches)
-	ret0, _ := ret[0].(api.MetadataMatchCriteria)
-	return ret0
-}
-
-// MergeMatchCriteria indicates an expected call of MergeMatchCriteria.
-func (mr *MockMetadataMatchCriteriaMockRecorder) MergeMatchCriteria(metadataMatches interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MergeMatchCriteria", reflect.TypeOf((*MockMetadataMatchCriteria)(nil).MergeMatchCriteria), metadataMatches)
-}
-
 // MetadataMatchCriteria mocks base method.
 func (m *MockMetadataMatchCriteria) MetadataMatchCriteria() []api.MetadataMatchCriterion {
 	m.ctrl.T.Helper()
@@ -870,6 +855,20 @@ func (m *MockMetadataMatchCriteria) MetadataMatchCriteria() []api.MetadataMatchC
 func (mr *MockMetadataMatchCriteriaMockRecorder) MetadataMatchCriteria() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MetadataMatchCriteria", reflect.TypeOf((*MockMetadataMatchCriteria)(nil).MetadataMatchCriteria))
+}
+
+// MergeMatchCriteria mocks base method.
+func (m *MockMetadataMatchCriteria) MergeMatchCriteria(metadataMatches map[string]string) api.MetadataMatchCriteria {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MergeMatchCriteria", metadataMatches)
+	ret0, _ := ret[0].(api.MetadataMatchCriteria)
+	return ret0
+}
+
+// MergeMatchCriteria indicates an expected call of MergeMatchCriteria.
+func (mr *MockMetadataMatchCriteriaMockRecorder) MergeMatchCriteria(metadataMatches interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MergeMatchCriteria", reflect.TypeOf((*MockMetadataMatchCriteria)(nil).MergeMatchCriteria), metadataMatches)
 }
 
 // MockPathMatchCriterion is a mock of PathMatchCriterion interface.
@@ -1199,6 +1198,20 @@ func (m *MockRouteBase) EXPECT() *MockRouteBaseMockRecorder {
 	return m.recorder
 }
 
+// RouteRule mocks base method.
+func (m *MockRouteBase) RouteRule() api.RouteRule {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RouteRule")
+	ret0, _ := ret[0].(api.RouteRule)
+	return ret0
+}
+
+// RouteRule indicates an expected call of RouteRule.
+func (mr *MockRouteBaseMockRecorder) RouteRule() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RouteRule", reflect.TypeOf((*MockRouteBase)(nil).RouteRule))
+}
+
 // DirectResponseRule mocks base method.
 func (m *MockRouteBase) DirectResponseRule() api.DirectResponseRule {
 	m.ctrl.T.Helper()
@@ -1211,20 +1224,6 @@ func (m *MockRouteBase) DirectResponseRule() api.DirectResponseRule {
 func (mr *MockRouteBaseMockRecorder) DirectResponseRule() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DirectResponseRule", reflect.TypeOf((*MockRouteBase)(nil).DirectResponseRule))
-}
-
-// Match mocks base method.
-func (m *MockRouteBase) Match(ctx context.Context, headers api.HeaderMap) api.Route {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Match", ctx, headers)
-	ret0, _ := ret[0].(api.Route)
-	return ret0
-}
-
-// Match indicates an expected call of Match.
-func (mr *MockRouteBaseMockRecorder) Match(ctx, headers interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Match", reflect.TypeOf((*MockRouteBase)(nil).Match), ctx, headers)
 }
 
 // RedirectRule mocks base method.
@@ -1241,16 +1240,16 @@ func (mr *MockRouteBaseMockRecorder) RedirectRule() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RedirectRule", reflect.TypeOf((*MockRouteBase)(nil).RedirectRule))
 }
 
-// RouteRule mocks base method.
-func (m *MockRouteBase) RouteRule() api.RouteRule {
+// Match mocks base method.
+func (m *MockRouteBase) Match(ctx context.Context, headers api.HeaderMap) api.Route {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RouteRule")
-	ret0, _ := ret[0].(api.RouteRule)
+	ret := m.ctrl.Call(m, "Match", ctx, headers)
+	ret0, _ := ret[0].(api.Route)
 	return ret0
 }
 
-// RouteRule indicates an expected call of RouteRule.
-func (mr *MockRouteBaseMockRecorder) RouteRule() *gomock.Call {
+// Match indicates an expected call of Match.
+func (mr *MockRouteBaseMockRecorder) Match(ctx, headers interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RouteRule", reflect.TypeOf((*MockRouteBase)(nil).RouteRule))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Match", reflect.TypeOf((*MockRouteBase)(nil).Match), ctx, headers)
 }

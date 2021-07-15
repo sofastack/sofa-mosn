@@ -220,24 +220,20 @@ func (rri *RouteRuleImplBase) ClusterName(ctx context.Context) string {
 		return rri.defaultCluster.clusterName
 	}
 
-	// When the same request gets cluster name a second time, the previous result is used directly.
-	if clusterName, err := variable.GetString(ctx, types.VarInternalRouterCluster); err == nil && clusterName != "" {
-		return clusterName
-	}
-
 	rri.lock.Lock()
 	if rri.randInstance == nil {
 		rri.randInstance = rand.New(rand.NewSource(time.Now().UnixNano()))
 	}
 	selectedValue := rri.randInstance.Intn(int(rri.totalClusterWeight))
 	rri.lock.Unlock()
+
 	for _, weightCluster := range rri.weightedClusters {
 		selectedValue = selectedValue - int(weightCluster.clusterWeight)
 		if selectedValue <= 0 {
-			variable.SetString(ctx, types.VarInternalRouterCluster, weightCluster.clusterName)
 			return weightCluster.clusterName
 		}
 	}
+
 	return rri.defaultCluster.clusterName
 }
 

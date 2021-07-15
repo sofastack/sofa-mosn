@@ -155,28 +155,6 @@ func TestWeightedClusterSelect(t *testing.T) {
 		}
 		t.Log("defalut = ", dcCount, "w1 = ", w1Count, "w2 =", w2Count)
 	}
-
-	// test weight cluster variable
-	ctx := context.TODO()
-	ctx = variable.NewVariableContext(ctx)
-	routeRuleImplBase, _ := NewRouteRuleImplBase(nil, routerMock1)
-	var dcCount, w1Count, w2Count int32
-	totalTimes := rand.Int31n(10000)
-	var i int32
-	for i = 0; i < totalTimes; i++ {
-		clusterName := routeRuleImplBase.ClusterName(ctx)
-		switch clusterName {
-		case "defaultCluster":
-			dcCount++
-		case "w1":
-			w1Count++
-		case "w2":
-			w2Count++
-		}
-	}
-
-	assert.Equal(t, w1Count+w2Count, totalTimes)
-	assert.True(t, w2Count == totalTimes || w1Count == totalTimes)
 }
 
 type finalizeResult struct {

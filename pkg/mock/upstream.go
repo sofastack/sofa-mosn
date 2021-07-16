@@ -6,14 +6,13 @@ package mock
 
 import (
 	context "context"
-	net "net"
-	reflect "reflect"
-	time "time"
-
 	gomock "github.com/golang/mock/gomock"
 	api "mosn.io/api"
 	v2 "mosn.io/mosn/pkg/config/v2"
 	types "mosn.io/mosn/pkg/types"
+	net "net"
+	reflect "reflect"
+	time "time"
 )
 
 // MockClusterManager is a mock of ClusterManager interface
@@ -234,6 +233,20 @@ func (m *MockClusterManager) UpdateTLSManager(arg0 *v2.TLSConfig) {
 func (mr *MockClusterManagerMockRecorder) UpdateTLSManager(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateTLSManager", reflect.TypeOf((*MockClusterManager)(nil).UpdateTLSManager), arg0)
+}
+
+// AppendHostWithConnection mocks base method
+func (m *MockClusterManager) AppendHostWithConnection(clusterName string, h v2.Host, connection types.ClientConnection) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AppendHostWithConnection", clusterName, h, connection)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AppendHostWithConnection indicates an expected call of AppendHostWithConnection
+func (mr *MockClusterManagerMockRecorder) AppendHostWithConnection(clusterName, h, connection interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AppendHostWithConnection", reflect.TypeOf((*MockClusterManager)(nil).AppendHostWithConnection), clusterName, h, connection)
 }
 
 // ShutdownConnectionPool mocks base method

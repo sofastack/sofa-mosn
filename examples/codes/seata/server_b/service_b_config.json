@@ -1,0 +1,83 @@
+{
+	"close_graceful" : true,
+	"branchTransactionServicePort": 3047,
+	"servers":[
+		{
+			"default_log_path":"stdout",
+			"routers":[
+				{
+					"router_config_name":"server_router",
+					"virtual_hosts":[{
+						"name":"serverHost",
+						"domains": ["*"],
+						"routers": [
+							{
+								"match":{"prefix":"/"},
+								"route":{"cluster_name":"serverCluster"}
+							}
+						]
+					}]
+				}
+			],
+			"listeners":[
+				{
+					"name":"serverListener",
+					"address": "127.0.0.1:2047",
+					"bind_port": true,
+					"filter_chains": [{
+						"filters": [
+							{
+								"type": "proxy",
+								"config": {
+									"downstream_protocol": "Http1",
+									"upstream_protocol": "Http1",
+									"router_config_name":"server_router"
+								}
+							}
+						]
+					}],
+					"stream_filters": [
+						{
+							"type": "seata",
+							"config": {
+								"addressing": "localhost:3047",
+								"serverAddressing": "localhost:8091",
+								"commitRetryCount": 5,
+								"rollbackRetryCount": 5,
+								"tccResources": [
+									{
+										"prepareRequestPath": "/service-b/try",
+										"commitRequestPath": "/service-b/confirm",
+										"rollbackRequestPath": "/service-b/cancel"
+									}
+								]
+							}
+						}
+					]
+				}
+			]
+		}
+	],
+	"cluster_manager":{
+		"clusters":[
+			{
+				"name":"serverCluster",
+				"type": "SIMPLE",
+				"lb_type": "LB_RANDOM",
+				"max_request_per_conn": 1024,
+				"conn_buffer_limit_bytes":32768,
+				"hosts":[
+					{"address":"127.0.0.1:8081"}
+				]
+			}
+		]
+	},
+	"admin": {
+		"address": {
+			"socket_address": {
+				"address": "0.0.0.0",
+				"port_value": 34903
+			}
+		}
+	}
+}

@@ -65,7 +65,7 @@ func TestImportsHandlerHttpCall(t *testing.T) {
 
 	d := abiContext.GetABIImports().(*DefaultImportsHandler)
 
-	reqHeader :=  common.CommonHeader(map[string]string{
+	reqHeader := common.CommonHeader(map[string]string{
 		"reqHeader1": "reqValue1",
 		"reqHeader2": "reqValue2",
 	})

@@ -42,6 +42,7 @@ import (
 	_ "mosn.io/mosn/pkg/filter/stream/mixer"
 	_ "mosn.io/mosn/pkg/filter/stream/payloadlimit"
 	_ "mosn.io/mosn/pkg/filter/stream/proxywasm"
+	_ "mosn.io/mosn/pkg/filter/stream/seata"
 	_ "mosn.io/mosn/pkg/filter/stream/stats"
 	_ "mosn.io/mosn/pkg/filter/stream/transcoder/http2bolt"
 	_ "mosn.io/mosn/pkg/metrics/sink"

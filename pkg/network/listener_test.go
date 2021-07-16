@@ -65,7 +65,7 @@ func testBase(t *testing.T, addr net.Addr) {
 			BindToPort: true,
 		},
 		PerConnBufferLimitBytes: 1024,
-		Addr: addr,
+		Addr:                    addr,
 	}
 	ln := NewListener(cfg)
 

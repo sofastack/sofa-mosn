@@ -17,11 +17,11 @@ import (
 	"mosn.io/mosn/pkg/stream"
 	_ "mosn.io/mosn/pkg/stream/http" // register http1
 	mtypes "mosn.io/mosn/pkg/types"
+	"mosn.io/mosn/pkg/variable"
 	"mosn.io/mosn/test/lib"
 	"mosn.io/mosn/test/lib/types"
 	"mosn.io/mosn/test/lib/utils"
 	"mosn.io/pkg/buffer"
-	"mosn.io/mosn/pkg/variable"
 )
 
 func init() {

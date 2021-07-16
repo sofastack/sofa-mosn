@@ -644,7 +644,7 @@ func TestRegisterNewAPI(t *testing.T) {
 func TestHelpAPI(t *testing.T) {
 	// reset
 	apiHandleFuncStore = map[string]func(http.ResponseWriter, *http.Request){
-		"/": help,
+		"/":                       help,
 		"/api/v1/config_dump":     configDump,
 		"/api/v1/stats":           statsDump,
 		"/api/v1/update_loglevel": updateLogLevel,

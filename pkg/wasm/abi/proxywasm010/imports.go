@@ -35,7 +35,7 @@ import (
 type DefaultImportsHandler struct {
 	proxywasm.DefaultImportsHandler
 	Instance common.WasmInstance
-	hc *httpCallout
+	hc       *httpCallout
 }
 
 // override
@@ -65,18 +65,18 @@ func (d *DefaultImportsHandler) Log(level proxywasm.LogLevel, msg string) proxyw
 var httpCalloutID int32
 
 type httpCallout struct {
-	id int32
-	d *DefaultImportsHandler
-	instance common.WasmInstance
+	id         int32
+	d          *DefaultImportsHandler
+	instance   common.WasmInstance
 	abiContext *ABIContext
 
-	urlString string
-	client *http.Client
-	req *http.Request
-	resp *http.Response
+	urlString  string
+	client     *http.Client
+	req        *http.Request
+	resp       *http.Response
 	respHeader api.HeaderMap
-	respBody buffer.IoBuffer
-	reqOnFly bool
+	respBody   buffer.IoBuffer
+	reqOnFly   bool
 }
 
 // override
@@ -91,14 +91,14 @@ func (d *DefaultImportsHandler) HttpCall(reqURL string, header common.HeaderMap,
 	calloutID := atomic.AddInt32(&httpCalloutID, 1)
 
 	d.hc = &httpCallout{
-		id: calloutID,
+		id:         calloutID,
 		d:          d,
 		instance:   d.Instance,
 		abiContext: d.Instance.GetData().(*ABIContext),
-		urlString: reqURL,
+		urlString:  reqURL,
 	}
 
-	d.hc.client = &http.Client{	Timeout: time.Millisecond * time.Duration(timeoutMilliseconds)}
+	d.hc.client = &http.Client{Timeout: time.Millisecond * time.Duration(timeoutMilliseconds)}
 
 	d.hc.req, err = http.NewRequest(http.MethodGet, u.String(), buffer.NewIoBufferBytes(body.Bytes()))
 	if err != nil {

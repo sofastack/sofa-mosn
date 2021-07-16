@@ -23,6 +23,7 @@ import (
 	"strings"
 	"sync"
 
+	"mosn.io/mosn/pkg/buffer"
 	mosnctx "mosn.io/mosn/pkg/context"
 	"mosn.io/mosn/pkg/types"
 )
@@ -128,8 +129,8 @@ func RegisterPrefix(prefix string, variable Variable) error {
 }
 
 func NewVariableContext(ctx context.Context) context.Context {
-	// TODO: sync.Pool reuse
-	values := make([]IndexedValue, len(indexedVariables)) // TODO: pre-alloc buffer for runtime variable
+	poolCtx := buffer.PoolContext(ctx)
+	variableBuf := poolCtx.Find(&ins, nil).(*variableBuffer)
 
-	return mosnctx.WithValue(ctx, types.ContextKeyVariables, values)
+	return mosnctx.WithValue(ctx, types.ContextKeyVariables, variableBuf.vars)
 }

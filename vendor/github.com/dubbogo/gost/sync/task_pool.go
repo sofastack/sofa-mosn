@@ -21,77 +21,41 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"os"
+	"runtime"
+	"runtime/debug"
 	"sync"
 	"sync/atomic"
+	"time"
 )
 
 import (
 	gxruntime "github.com/dubbogo/gost/runtime"
 )
 
-const (
-	defaultTaskQNumber = 10
-	defaultTaskQLen    = 128
-)
+type task func()
 
-/////////////////////////////////////////
-// Task Pool Options
-/////////////////////////////////////////
-
-type TaskPoolOptions struct {
-	tQLen      int // task queue length. buffer size per queue
-	tQNumber   int // task queue number. number of queue
-	tQPoolSize int // task pool size. number of workers
+// GenericTaskPool represents an generic task pool.
+type GenericTaskPool interface {
+	// AddTask wait idle worker add task
+	AddTask(t task) bool
+	// AddTaskAlways add task to queues or do it immediately
+	AddTaskAlways(t task)
+	// AddTaskBalance add task to idle queue
+	AddTaskBalance(t task)
+	// Close use to close the task pool
+	Close()
+	// IsClosed use to check pool status.
+	IsClosed() bool
 }
 
-func (o *TaskPoolOptions) validate() {
-	if o.tQPoolSize < 1 {
-		panic(fmt.Sprintf("illegal pool size %d", o.tQPoolSize))
-	}
-
-	if o.tQLen < 1 {
-		o.tQLen = defaultTaskQLen
-	}
-
-	if o.tQNumber < 1 {
-		o.tQNumber = defaultTaskQNumber
-	}
-
-	if o.tQNumber > o.tQPoolSize {
-		o.tQNumber = o.tQPoolSize
-	}
-}
-
-type TaskPoolOption func(*TaskPoolOptions)
-
-// @size is the task queue pool size
-func WithTaskPoolTaskPoolSize(size int) TaskPoolOption {
-	return func(o *TaskPoolOptions) {
-		o.tQPoolSize = size
-	}
-}
-
-// @length is the task queue length
-func WithTaskPoolTaskQueueLength(length int) TaskPoolOption {
-	return func(o *TaskPoolOptions) {
-		o.tQLen = length
-	}
-}
-
-// @number is the task queue number
-func WithTaskPoolTaskQueueNumber(number int) TaskPoolOption {
-	return func(o *TaskPoolOptions) {
-		o.tQNumber = number
-	}
+func goSafely(fn func()) {
+	gxruntime.GoSafely(nil, false, fn, nil)
 }
 
 /////////////////////////////////////////
 // Task Pool
 /////////////////////////////////////////
-
-// task t
-type task func()
-
 // task pool: manage task ts
 type TaskPool struct {
 	TaskPoolOptions
@@ -104,8 +68,8 @@ type TaskPool struct {
 	done chan struct{}
 }
 
-// build a task pool
-func NewTaskPool(opts ...TaskPoolOption) *TaskPool {
+// NewTaskPool build a task pool
+func NewTaskPool(opts ...TaskPoolOption) GenericTaskPool {
 	var tOpts TaskPoolOptions
 	for _, opt := range opts {
 		opt(&tOpts)
@@ -171,13 +135,20 @@ func (p *TaskPool) run(id int, q chan task) error {
 
 		case t, ok = <-q:
 			if ok {
-				t()
+				func() {
+					defer func() {
+						if r := recover(); r != nil {
+							fmt.Fprintf(os.Stderr, "%s goroutine panic: %v\n%s\n",
+								time.Now(), r, string(debug.Stack()))
+						}
+					}()
+					t()
+				}()
 			}
 		}
 	}
 }
 
-// AddTask wait idle worker add task
 // return false when the pool is stop
 func (p *TaskPool) AddTask(t task) (ok bool) {
 	idx := atomic.AddUint32(&p.idx, 1)
@@ -192,7 +163,6 @@ func (p *TaskPool) AddTask(t task) (ok bool) {
 	}
 }
 
-// AddTaskAlways add task to queues or do it immediately
 func (p *TaskPool) AddTaskAlways(t task) {
 	id := atomic.AddUint32(&p.idx, 1) % uint32(p.tQNumber)
 
@@ -200,11 +170,10 @@ func (p *TaskPool) AddTaskAlways(t task) {
 	case p.qArray[id] <- t:
 		return
 	default:
-		p.goSafely(t)
+		goSafely(t)
 	}
 }
 
-// AddTaskBalance add task to idle queue
 // do it immediately when no idle queue
 func (p *TaskPool) AddTaskBalance(t task) {
 	length := len(p.qArray)
@@ -219,11 +188,7 @@ func (p *TaskPool) AddTaskBalance(t task) {
 		}
 	}
 
-	p.goSafely(t)
-}
-
-func (p *TaskPool) goSafely(fn func()) {
-	gxruntime.GoSafely(nil, false, fn, nil)
+	goSafely(t)
 }
 
 // stop all tasks
@@ -256,3 +221,118 @@ func (p *TaskPool) Close() {
 		close(p.qArray[i])
 	}
 }
+
+/////////////////////////////////////////
+// Task Pool Simple
+/////////////////////////////////////////
+type taskPoolSimple struct {
+	work chan task     // task channel
+	sem  chan struct{} // gr pool size
+
+	wg sync.WaitGroup
+
+	once sync.Once
+	done chan struct{}
+}
+
+// NewTaskPoolSimple build a simple task pool
+func NewTaskPoolSimple(size int) GenericTaskPool {
+	if size < 1 {
+		size = runtime.GOMAXPROCS(-1) * 100
+	}
+	return &taskPoolSimple{
+		work: make(chan task),
+		sem:  make(chan struct{}, size),
+		done: make(chan struct{}),
+	}
+}
+
+func (p *taskPoolSimple) AddTask(t task) bool {
+	select {
+	case <-p.done:
+		return false
+	default:
+	}
+
+	select {
+	case <-p.done:
+		return false
+	case p.work <- t:
+	case p.sem <- struct{}{}:
+		p.wg.Add(1)
+		go p.worker(t)
+	}
+	return true
+}
+
+func (p *taskPoolSimple) AddTaskAlways(t task) {
+	select {
+	case <-p.done:
+		return
+	default:
+	}
+
+	select {
+	case p.work <- t:
+		// exec @t in gr pool
+		return
+	default:
+	}
+	select {
+	case p.work <- t:
+		// exec @t in gr pool
+	case p.sem <- struct{}{}:
+		// add a gr to the gr pool
+		p.wg.Add(1)
+		go p.worker(t)
+	default:
+		// gen a gr temporarily
+		goSafely(t)
+	}
+}
+
+func (p *taskPoolSimple) worker(t task) {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Fprintf(os.Stderr, "%s goroutine panic: %v\n%s\n",
+				time.Now(), r, string(debug.Stack()))
+		}
+		p.wg.Done()
+		<-p.sem
+	}()
+	t()
+	for t := range p.work {
+		t()
+	}
+}
+
+// stop all tasks
+func (p *taskPoolSimple) stop() {
+	select {
+	case <-p.done:
+		return
+	default:
+		p.once.Do(func() {
+			close(p.done)
+			close(p.work)
+		})
+	}
+}
+
+func (p *taskPoolSimple) Close() {
+	p.stop()
+	// wait until all tasks done
+	p.wg.Wait()
+}
+
+// check whether the session has been closed.
+func (p *taskPoolSimple) IsClosed() bool {
+	select {
+	case <-p.done:
+		return true
+	default:
+		return false
+	}
+}
+
+func (p *taskPoolSimple) AddTaskBalance(t task) { p.AddTaskAlways(t) }

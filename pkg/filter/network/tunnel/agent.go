@@ -108,10 +108,11 @@ func bootstrap(conf *agentBootstrapConfig) {
 						return true
 					})
 					for _, addr := range decreased {
-						val, ok := connectionMap.LoadAndDelete(addr)
+						val, ok := connectionMap.Load(addr)
 						if !ok {
 							continue
 						}
+						connectionMap.Delete(addr)
 						for _, conn := range val.([]*AgentRawConnection) {
 							err := conn.Stop()
 							if err != nil {

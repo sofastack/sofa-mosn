@@ -22,11 +22,14 @@ import (
 	"sync/atomic"
 	"time"
 
+	"mosn.io/pkg/utils"
+
 	v2 "mosn.io/mosn/pkg/config/v2"
 	"mosn.io/mosn/pkg/log"
 	"mosn.io/mosn/pkg/types"
-	"mosn.io/pkg/utils"
 )
+
+var firstInterval = time.Second
 
 const (
 	DefaultTimeout  = time.Second
@@ -49,6 +52,7 @@ type healthChecker struct {
 	timeout            time.Duration
 	intervalBase       time.Duration
 	intervalJitter     time.Duration
+	initialDelay       time.Duration
 	healthyThreshold   uint32
 	unhealthyThreshold uint32
 	rander             *rand.Rand
@@ -79,6 +83,13 @@ func newHealthChecker(cfg v2.HealthCheck, f types.HealthCheckSessionFactory) typ
 		checkers:           make(map[string]*sessionChecker),
 		stats:              newHealthCheckStats(cfg.ServiceName),
 	}
+
+	if cfg.InitialDelayConfig != nil {
+		hc.initialDelay = cfg.InitialDelayConfig.Duration
+	} else {
+		hc.initialDelay = firstInterval
+	}
+
 	// Add common callbacks when create
 	// common callbacks should be registered and configured
 	for _, name := range cfg.CommonCallbacks {

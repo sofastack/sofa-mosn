@@ -20,12 +20,12 @@ package healthcheck
 import (
 	"runtime/debug"
 	"sync/atomic"
-	"time"
 
 	"mosn.io/api"
+	"mosn.io/pkg/utils"
+
 	"mosn.io/mosn/pkg/log"
 	"mosn.io/mosn/pkg/types"
-	"mosn.io/pkg/utils"
 )
 
 // sessionChecker is a wrapper of types.HealthCheckSession for health check
@@ -61,8 +61,6 @@ func newChecker(s types.HealthCheckSession, h types.Host, hc *healthChecker) *se
 	return c
 }
 
-var firstInterval = time.Second
-
 func (c *sessionChecker) Start() {
 	defer func() {
 		if r := recover(); r != nil {
@@ -72,7 +70,8 @@ func (c *sessionChecker) Start() {
 		c.checkTimer.Stop()
 		c.checkTimeout.Stop()
 	}()
-	c.checkTimer = utils.NewTimer(firstInterval, c.OnCheck)
+
+	c.checkTimer = utils.NewTimer(c.HealthChecker.initialDelay, c.OnCheck)
 	for {
 		select {
 		case <-c.stop:

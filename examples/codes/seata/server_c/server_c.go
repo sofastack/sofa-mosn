@@ -17,6 +17,7 @@ func main() {
 		inv := &Inventory{}
 		err := context.BindJSON(inv)
 		if err == nil {
+			fmt.Println(fmt.Sprintf("inventory %d tried!", inv.ID))
 			context.JSON(200, gin.H{
 				"success": true,
 				"message": fmt.Sprintf("inventory %d tried!", inv.ID),
@@ -33,9 +34,10 @@ func main() {
 		inv := &Inventory{}
 		err := context.BindJSON(inv)
 		if err == nil {
+			fmt.Println(fmt.Sprintf("inventory %d confirmed!", inv.ID))
 			context.JSON(200, gin.H{
 				"success": true,
-				"message": fmt.Sprintf("inventory %d tried!", inv.ID),
+				"message": fmt.Sprintf("inventory %d confirmed!", inv.ID),
 			})
 			return
 		}
@@ -49,9 +51,10 @@ func main() {
 		inv := &Inventory{}
 		err := context.BindJSON(inv)
 		if err == nil {
+			fmt.Println(fmt.Sprintf("inventory %d canceled!", inv.ID))
 			context.JSON(200, gin.H{
 				"success": true,
-				"message": fmt.Sprintf("inventory %d tried!", inv.ID),
+				"message": fmt.Sprintf("inventory %d canceled!", inv.ID),
 			})
 			return
 		}

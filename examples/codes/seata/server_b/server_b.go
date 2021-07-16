@@ -17,6 +17,7 @@ func main() {
 		account := &Account{}
 		err := context.BindJSON(account)
 		if err == nil {
+			fmt.Println(fmt.Sprintf("account %d tried!", account.ID))
 			context.JSON(200, gin.H{
 				"success": true,
 				"message": fmt.Sprintf("account %d tried!", account.ID),
@@ -33,6 +34,7 @@ func main() {
 		account := &Account{}
 		err := context.BindJSON(account)
 		if err == nil {
+			fmt.Println(fmt.Sprintf("account %d confirmed!", account.ID))
 			context.JSON(200, gin.H{
 				"success": true,
 				"message": fmt.Sprintf("account %d confirmed!", account.ID),
@@ -49,6 +51,7 @@ func main() {
 		account := &Account{}
 		err := context.BindJSON(account)
 		if err == nil {
+			fmt.Println(fmt.Sprintf("account %d canceled!", account.ID))
 			context.JSON(200, gin.H{
 				"success": true,
 				"message": fmt.Sprintf("account %d canceled!", account.ID),

@@ -197,9 +197,12 @@ func (p *proxy) onUpstreamEvent(event api.ConnectionEvent) {
 		p.finalizeUpstreamConnectionStats()
 		p.readCallbacks.Connection().Close(api.FlushWrite, api.RemoteClose)
 
-	case api.LocalClose, api.OnReadErrClose:
+	case api.OnReadErrClose:
 		p.finalizeUpstreamConnectionStats()
 		p.readCallbacks.Connection().Close(api.NoFlush, api.LocalClose)
+
+	case api.LocalClose:
+		log.DefaultLogger.Debugf("upstream close write")
 
 	case api.OnConnect:
 	case api.Connected:
@@ -231,10 +234,20 @@ func (p *proxy) onConnectionSuccess() {
 	log.DefaultLogger.Debugf("new upstream connection %d created", p.upstreamConnection.ID())
 }
 
+type writeCloser interface {
+	CloseWrite(ccType api.ConnectionCloseType, eventType api.ConnectionEvent) (err error)
+}
+
 func (p *proxy) onDownstreamEvent(event api.ConnectionEvent) {
-	if p.upstreamConnection != nil {
+	if upstreamConnection := p.upstreamConnection; upstreamConnection != nil {
 		if event == api.RemoteClose {
-			p.upstreamConnection.Close(api.FlushWrite, api.LocalClose)
+			if closer, ok := upstreamConnection.(writeCloser); ok {
+				if err := closer.CloseWrite(api.FlushWrite, api.LocalClose); err != nil {
+					log.DefaultLogger.Warnf("close upstream write failed, %s", err)
+				}
+			} else {
+				p.upstreamConnection.Close(api.FlushWrite, api.LocalClose)
+			}
 		} else if event == api.LocalClose {
 			p.upstreamConnection.Close(api.NoFlush, api.LocalClose)
 		}

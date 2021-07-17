@@ -87,7 +87,7 @@ type connection struct {
 
 	// readLoop/writeLoop goroutine fields:
 	internalLoopStarted bool
-	internalStopChan    chan struct{}
+
 	// eventLoop fields:
 	writeSchedChan chan bool // writable if not scheduled yet.
 
@@ -112,6 +112,18 @@ type connection struct {
 		readTimeoutTimer *time.Timer
 		readBufferMux    sync.Mutex
 	}
+
+	readContext, writeContext          context.Context
+	stopRead, stopWrite, stopReadWrite context.CancelFunc
+
+	isDownstream bool
+}
+
+func setReadWriteContext(c *connection) {
+	var root context.Context
+	root, c.stopReadWrite = context.WithCancel(context.Background())
+	c.readContext, c.stopRead = context.WithCancel(root)
+	c.writeContext, c.stopWrite = context.WithCancel(root)
 }
 
 // NewServerConnection new server-side connection, rawc is the raw connection from go/net
@@ -119,19 +131,18 @@ func NewServerConnection(ctx context.Context, rawc net.Conn, stopChan chan struc
 	id := atomic.AddUint64(&idCounter, 1)
 
 	conn := &connection{
-		id:               id,
-		rawConnection:    rawc,
-		localAddr:        rawc.LocalAddr(),
-		remoteAddr:       rawc.RemoteAddr(),
-		stopChan:         stopChan,
-		readEnabled:      true,
-		connected:        1,
-		readEnabledChan:  make(chan bool, 1),
-		internalStopChan: make(chan struct{}),
-		writeBufferChan:  make(chan *[]buffer.IoBuffer, 8),
-		writeSchedChan:   make(chan bool, 1),
-		transferChan:     make(chan uint64),
-		network:          rawc.LocalAddr().Network(),
+		id:              id,
+		rawConnection:   rawc,
+		localAddr:       rawc.LocalAddr(),
+		remoteAddr:      rawc.RemoteAddr(),
+		stopChan:        stopChan,
+		readEnabled:     true,
+		connected:       1,
+		readEnabledChan: make(chan bool, 1),
+		writeBufferChan: make(chan *[]buffer.IoBuffer, 8),
+		writeSchedChan:  make(chan bool, 1),
+		transferChan:    make(chan uint64),
+		network:         rawc.LocalAddr().Network(),
 		stats: &types.ConnectionStats{
 			ReadTotal:     metrics.NewCounter(),
 			ReadBuffered:  metrics.NewGauge(),
@@ -141,7 +152,10 @@ func NewServerConnection(ctx context.Context, rawc net.Conn, stopChan chan struc
 		readCollector:  metrics.NilCounter{},
 		writeCollector: metrics.NilCounter{},
 		tryMutex:       utils.NewMutex(),
+		isDownstream:   true,
 	}
+
+	setReadWriteContext(conn)
 
 	// store fd
 	if val := mosnctx.Get(ctx, types.ContextKeyConnectionFd); val != nil {
@@ -384,7 +398,7 @@ func (c *connection) startReadLoop() {
 	for {
 		// exit loop asap. one receive & one default block will be optimized by go compiler
 		select {
-		case <-c.internalStopChan:
+		case <-c.readContext.Done():
 			return
 		default:
 		}
@@ -412,7 +426,7 @@ func (c *connection) startReadLoop() {
 		}
 
 		select {
-		case <-c.internalStopChan:
+		case <-c.readContext.Done():
 			return
 		case <-c.readEnabledChan:
 		default:
@@ -439,7 +453,13 @@ func (c *connection) startReadLoop() {
 					}
 
 					if err == io.EOF {
-						c.Close(api.NoFlush, api.RemoteClose)
+						if c.isDownstream {
+							if e := c.CloseRead(api.NoFlush, api.RemoteClose); e != nil {
+								log.DefaultLogger.Warnf("close downstream read failed, %s", e)
+							}
+						} else {
+							c.Close(api.NoFlush, api.RemoteClose)
+						}
 					} else {
 						c.Close(api.NoFlush, api.OnReadErrClose)
 					}
@@ -478,7 +498,7 @@ func (c *connection) transferWrite(id uint64) {
 	log.DefaultLogger.Infof("[network] TransferWrite begin")
 	for {
 		select {
-		case <-c.internalStopChan:
+		case <-c.writeContext.Done():
 			return
 		case buf, ok := <-c.writeBufferChan:
 			if !ok {
@@ -515,7 +535,7 @@ func (c *connection) doRead() (err error) {
 	bytesRead, err = c.readBuffer.ReadOnce(c.rawConnection)
 
 	if err != nil {
-		if atomic.LoadUint32(&c.closed) == 1 {
+		if flag := atomic.LoadUint32(&c.closed); hasFlag(flag, ReadClosed) {
 			return err
 		}
 		if te, ok := err.(net.Error); ok && te.Timeout() {
@@ -635,7 +655,7 @@ func (c *connection) setWriteDeadline() {
 
 func (c *connection) writeDirectly(buf *[]buffer.IoBuffer) (err error) {
 	select {
-	case <-c.internalStopChan:
+	case <-c.writeContext.Done():
 		return types.ErrConnectionHasClosed
 	default:
 	}
@@ -665,7 +685,7 @@ func (c *connection) writeDirectly(buf *[]buffer.IoBuffer) (err error) {
 				log.DefaultLogger.Debugf("[network] [write directly] Error on write. Connection = %d, Remote Address = %s, err = %s, conn = %p",
 					c.id, c.RemoteAddr().String(), err, c)
 			}
-			c.Close(api.NoFlush, api.LocalClose)
+			c.CloseWrite(api.NoFlush, api.LocalClose)
 		} else {
 			log.DefaultLogger.Errorf("[network] [write directly] Error on write. Connection = %d, Remote Address = %s, err = %s, conn = %p",
 				c.id, c.RemoteAddr().String(), err, c)
@@ -695,13 +715,13 @@ func (c *connection) startWriteLoop() {
 	for {
 		// exit loop asap. one receive & one default block will be optimized by go compiler
 		select {
-		case <-c.internalStopChan:
+		case <-c.writeContext.Done():
 			return
 		default:
 		}
 
 		select {
-		case <-c.internalStopChan:
+		case <-c.writeContext.Done():
 			return
 		case <-c.transferChan:
 			needTransfer = true
@@ -772,8 +792,10 @@ func (c *connection) appendBuffer(iobuffers *[]buffer.IoBuffer) {
 
 func (c *connection) doWrite() (int64, error) {
 	bytesSent, err := c.doWriteIo()
-	if err != nil && atomic.LoadUint32(&c.closed) == 1 {
-		return 0, nil
+	if err != nil {
+		if flag := atomic.LoadUint32(&c.closed); hasFlag(flag, WriteClosed) {
+			return 0, nil
+		}
 	}
 
 	c.updateWriteBuffStats(bytesSent, int64(c.writeBufLen()))
@@ -854,6 +876,119 @@ func (c *connection) writeBufLen() (bufLen int) {
 	return
 }
 
+const (
+	Open        uint32 = 0
+	ReadClosed  uint32 = 1
+	WriteClosed uint32 = 2
+	BothClosed  uint32 = 3
+)
+
+func hasFlag(status, flag uint32) bool {
+	return status&flag == flag
+}
+
+func setFlag(status, flag uint32) uint32 {
+	return status | flag
+}
+
+type readCloser interface {
+	CloseRead() error
+}
+
+type writeCloser interface {
+	CloseWrite() error
+}
+
+func tryClose(conn net.Conn, flag uint32) (err error) {
+	if hasFlag(flag, ReadClosed) {
+		if closer, ok := conn.(readCloser); ok {
+			err = closer.CloseRead()
+		}
+	} else if hasFlag(flag, WriteClosed) {
+		if closer, ok := conn.(writeCloser); ok {
+			err = closer.CloseWrite()
+		}
+	}
+	return
+}
+
+func (c *connection) CloseRead(closeType api.ConnectionCloseType, eventType api.ConnectionEvent) (err error) {
+
+	if c.network == "udp" {
+		err = c.Close(closeType, eventType)
+		return
+	}
+
+	if err = c.close(ReadClosed, eventType, func() error {
+		c.updateReadBufStats(0, 0)
+		c.stopRead()
+		return nil
+	}); err != nil {
+		return
+	}
+
+	return
+}
+
+func (c *connection) CloseWrite(ccType api.ConnectionCloseType, eventType api.ConnectionEvent) (err error) {
+
+	if c.network == "udp" {
+		err = c.Close(ccType, eventType)
+		return
+	}
+
+	if ccType == api.FlushWrite {
+		if err = c.Write(buffer.NewIoBufferEOF()); err != nil {
+			return
+		}
+	}
+
+	if err = c.close(WriteClosed, eventType, func() error {
+		c.updateWriteBuffStats(0, 0)
+		c.stopWrite()
+		return nil
+	}); err != nil {
+		return
+	}
+
+	return
+}
+
+func (c *connection) close(flag uint32, eventType api.ConnectionEvent, callback func() error) (err error) {
+
+	var status uint32
+
+	if status = atomic.LoadUint32(&c.closed); hasFlag(status, flag) {
+		return
+	}
+
+	for ; !hasFlag(status, flag); status = atomic.LoadUint32(&c.closed) {
+
+		if atomic.CompareAndSwapUint32(&c.closed, status, setFlag(status, flag)) {
+			break
+		}
+	}
+
+	// connection failed in client mode
+	if c.rawConnection == nil || reflect.ValueOf(c.rawConnection).IsNil() {
+		return
+	}
+
+	if err = tryClose(c.rawConnection, flag); err != nil {
+		return
+	}
+
+	if err = callback(); err != nil {
+		return
+	}
+
+	for _, cb := range c.connCallbacks {
+		cb.OnEvent(eventType)
+	}
+
+	return
+}
+
 func (c *connection) Close(ccType api.ConnectionCloseType, eventType api.ConnectionEvent) error {
 	defer func() {
 		if p := recover(); p != nil {
@@ -861,26 +996,20 @@ func (c *connection) Close(ccType api.ConnectionCloseType, eventType api.Connect
 		}
 	}()
 
-	if ccType == api.FlushWrite {
-		c.Write(buffer.NewIoBufferEOF())
-		return nil
+	for status := atomic.LoadUint32(&c.closed); !hasFlag(status, BothClosed); status = atomic.LoadUint32(&c.closed) {
+
+		if atomic.CompareAndSwapUint32(&c.closed, status, setFlag(status, BothClosed)) {
+			break
+		}
 	}
 
-	if !atomic.CompareAndSwapUint32(&c.closed, 0, 1) {
-		return nil
+	if ccType == api.FlushWrite {
+		c.Write(buffer.NewIoBufferEOF())
 	}
 
 	// connection failed in client mode
 	if c.rawConnection == nil || reflect.ValueOf(c.rawConnection).IsNil() {
 		return nil
-	}
-
-	// shutdown read first
-	if rawc, ok := c.rawConnection.(*net.TCPConn); ok {
-		if log.DefaultLogger.GetLogLevel() >= log.DEBUG {
-			log.DefaultLogger.Debugf("[network] [close connection] Close TCP Conn, Remote Address is = %s, eventType is = %s", rawc.RemoteAddr(), eventType)
-		}
-		rawc.CloseRead()
 	}
 
 	if c.network == "udp" && c.RawConn().RemoteAddr() == nil {
@@ -890,7 +1019,8 @@ func (c *connection) Close(ccType api.ConnectionCloseType, eventType api.Connect
 
 	// wait for io loops exit, ensure single thread operate streams on the connection
 	// because close function must be called by one io loop thread, notify another loop here
-	close(c.internalStopChan)
+	c.stopReadWrite()
+
 	if c.poll.eventLoop != nil {
 		// unregister events while connection close
 		c.poll.eventLoop.unregisterRead(c)
@@ -1031,7 +1161,7 @@ func (c *connection) SetTransferEventListener(listener func() bool) {
 }
 
 func (c *connection) State() api.ConnState {
-	if atomic.LoadUint32(&c.closed) == 1 {
+	if state := atomic.LoadUint32(&c.closed); hasFlag(state, WriteClosed) || hasFlag(state, ReadClosed) {
 		return api.ConnClosed
 	}
 	if atomic.LoadUint32(&c.connected) == 1 {
@@ -1054,14 +1184,13 @@ func NewClientConnection(connectTimeout time.Duration, tlsMng types.TLSClientCon
 
 	conn := &clientConnection{
 		connection: connection{
-			id:               id,
-			remoteAddr:       remoteAddr,
-			stopChan:         stopChan,
-			readEnabled:      true,
-			readEnabledChan:  make(chan bool, 1),
-			internalStopChan: make(chan struct{}),
-			writeBufferChan:  make(chan *[]buffer.IoBuffer, 8),
-			writeSchedChan:   make(chan bool, 1),
+			id:              id,
+			remoteAddr:      remoteAddr,
+			stopChan:        stopChan,
+			readEnabled:     true,
+			readEnabledChan: make(chan bool, 1),
+			writeBufferChan: make(chan *[]buffer.IoBuffer, 8),
+			writeSchedChan:  make(chan bool, 1),
 			stats: &types.ConnectionStats{
 				ReadTotal:     metrics.NewCounter(),
 				ReadBuffered:  metrics.NewGauge(),
@@ -1072,9 +1201,12 @@ func NewClientConnection(connectTimeout time.Duration, tlsMng types.TLSClientCon
 			writeCollector: metrics.NilCounter{},
 			tlsMng:         tlsMng,
 			tryMutex:       utils.NewMutex(),
+			isDownstream:   false,
 		},
 		connectTimeout: connectTimeout,
 	}
+
+	setReadWriteContext(&conn.connection)
 
 	conn.filterManager = newFilterManager(conn)
 

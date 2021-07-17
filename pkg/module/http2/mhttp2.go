@@ -11,7 +11,6 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"io"
 	"math"
 	"net/http"
 	"net/url"
@@ -105,18 +104,13 @@ func (ms *MStream) WriteHeader(end bool) error {
 func (ms *MStream) WriteData() (err error) {
 	if ms.UseStream {
 		var sawEOF bool
-		bufp := buffer.GetBytes(defaultMaxReadFrameSize)
-		defer buffer.PutBytes(bufp)
-		buf := *bufp
+
 		for !sawEOF {
-			n, err := ms.SendData.Read(buf)
-			if err == io.EOF {
+			remain := ms.SendData.Bytes()
+			if remain == nil {
 				sawEOF = true
 				err = nil
-			} else if err != nil {
-				return err
 			}
-			remain := buf[:n]
 			for len(remain) > 0 && err == nil {
 				var allowed int32
 				if allowed, err = ms.awaitFlowControl(len(remain)); err != nil {
@@ -126,6 +120,7 @@ func (ms *MStream) WriteData() (err error) {
 				remain = remain[allowed:]
 				err = ms.conn.Framer.writeData(ms.id, false, data)
 			}
+			buffer.PutBytes(&remain)
 		}
 	} else {
 		remain := ms.SendData.Bytes()
@@ -1131,20 +1126,12 @@ func (cc *MClientStream) writeDataAndTrailer() (err error) {
 	conn := cc.conn
 	if cc.UseStream {
 		var sawEOF bool
-
-		bufp := buffer.GetBytes(int(conn.maxFrameSize))
-		defer buffer.PutBytes(bufp)
-		buf := *bufp
-
 		for !sawEOF {
-			n, err := cc.SendData.Read(buf)
-			if err == io.EOF {
+			remain := cc.SendData.Bytes()
+			if remain == nil {
 				sawEOF = true
 				err = nil
-			} else if err != nil {
-				return err
 			}
-			remain := buf[:n]
 			for len(remain) > 0 {
 				var allowed int32
 				if allowed, err = cc.awaitFlowControl(len(remain)); err != nil {
@@ -1156,6 +1143,7 @@ func (cc *MClientStream) writeDataAndTrailer() (err error) {
 					return err
 				}
 			}
+			buffer.PutBytes(&remain)
 		}
 	} else {
 		remain := cc.SendData.Bytes()

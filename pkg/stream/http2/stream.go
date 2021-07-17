@@ -361,7 +361,7 @@ func (conn *serverStreamConnection) handleFrame(ctx context.Context, i interface
 		stream.header = header
 		stream.trailer = &mhttp2.HeaderMap{}
 		if conn.useStream {
-			stream.recData = buffer.NewPipeBuffer(0)
+			stream.recData = buffer.NewIoBufferChain(0)
 			stream.receiver.OnReceive(stream.ctx, stream.header, stream.recData, stream.trailer)
 		} else {
 			stream.recData = buffer.GetIoBuffer(0)
@@ -795,7 +795,7 @@ func (conn *clientStreamConnection) handleFrame(ctx context.Context, i interface
 		stream.header = header
 		stream.trailer = &mhttp2.HeaderMap{}
 		if conn.useStream {
-			stream.recData = buffer.NewPipeBuffer(0)
+			stream.recData = buffer.NewIoBufferChain(0)
 			stream.receiver.OnReceive(stream.ctx, stream.header, stream.recData, stream.trailer)
 		} else {
 			stream.recData = buffer.GetIoBuffer(0)

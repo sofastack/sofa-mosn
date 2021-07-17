@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package main
+package mosn
 
 import (
 	"fmt"
@@ -23,6 +23,12 @@ import (
 	_ "net/http/pprof"
 	"runtime"
 	"time"
+
+	_ "mosn.io/mosn/pkg/admin/debug"
+	_ "mosn.io/mosn/pkg/networkextention/discovery/fsdis"
+	_ "mosn.io/mosn/pkg/networkextention/l7/stream/filter/echo"
+	_ "mosn.io/mosn/pkg/networkextention/l7/stream/filter/metadata"
+	_ "mosn.io/mosn/pkg/networkextention/l7/stream/filter/metadata/unit"
 
 	admin "mosn.io/mosn/pkg/admin/server"
 	"mosn.io/mosn/pkg/admin/store"
@@ -46,7 +52,7 @@ const (
 )
 
 // create stream filter factories
-func init() {
+func Start() {
 	// TODO get config path from envoy cfg or environment variable
 	initStreamFilterAndMosnService(DefaultMosnConfigPath)
 }

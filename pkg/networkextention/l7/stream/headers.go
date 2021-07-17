@@ -19,6 +19,7 @@ package stream
 
 import (
 	"mosn.io/api"
+	"mosn.io/mosn/pkg/networkextention/utils"
 	"mosn.io/mosn/pkg/protocol"
 )
 
@@ -51,4 +52,15 @@ func (h *Headers) Clone() api.HeaderMap {
 	}
 	clone.Update = copy
 	return clone
+}
+
+// DirectDeepCopyKeyValue used to deep copy header's key and value
+func (h *Headers) DirectDeepCopyKeyValue() {
+	deepCopy := make(map[string]string)
+	h.Range(func(k, v string) bool {
+		deepCopy[utils.DeepCopyString(k)] = utils.DeepCopyString(v)
+		return true
+	})
+	h.CommonHeader = protocol.CommonHeader(deepCopy)
+	//Note: the member 'Update' of 'Headers' does not need deep copy.
 }

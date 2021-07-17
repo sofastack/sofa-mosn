@@ -18,30 +18,16 @@
 package main
 
 /*
+
 #include <stdlib.h>
 #include <string.h>
-#include<stdint.h>
-typedef struct {
-    const char **headers;
-    const char **trailers;
-    const char *req_body[2];
-    uint64_t cid;
-    uint64_t sid;
-}Request;
 
-typedef struct {
-    const char **headers;
-    const char **trailers;
-    char *resp_body[2];
-    int   status;
-    int   direct_response;
-}Response;
+#include "api.h"
+
 */
 import "C"
 
 import (
-	"context"
-	"mosn.io/api"
 	"reflect"
 	"runtime/debug"
 	"unsafe"
@@ -51,10 +37,191 @@ import (
 	"mosn.io/mosn/pkg/protocol"
 	"mosn.io/mosn/pkg/types"
 	"mosn.io/pkg/buffer"
+	"mosn.io/pkg/utils"
 )
 
 // sizeof pointer offset
 var pointerSize = unsafe.Sizeof(uintptr(0))
+
+// note need to make sure there is no concurrency
+var postDecodePointer C.fc
+var postEncodePointer C.fc
+
+//export setPostDecodeCallbackFunc
+func setPostDecodeCallbackFunc(f C.fc) {
+	postDecodePointer = f
+}
+
+//export setPostEncodeCallbackFunc
+func setPostEncodeCallbackFunc(f C.fc) {
+	postEncodePointer = f
+}
+
+//export initReqAndResp
+func initReqAndResp(req *C.Request, resp *C.Response, headerLen C.size_t, trailerLen C.size_t) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.DefaultLogger.Errorf("[golang_extention] initReqAndResp() panic %v\n%s", r, string(debug.Stack()))
+		}
+	}()
+
+	// headers -> |key-data|key-len|val-data|val-len|null|
+	req.headers = (**C.char)(C.calloc(C.size_t(4*headerLen+1), C.size_t(pointerSize)))
+	req.trailers = (**C.char)(C.calloc(C.size_t(4*trailerLen+1), C.size_t(pointerSize)))
+
+	// req_body[0] save request body pointer, req_body[1] save request body length
+	req.req_body[0] = nil
+	req.req_body[1] = nil
+
+	// filter
+	req.filter = nil
+	// resp_body[0] save response body pointer, resp_body[1] save response body length
+	resp.resp_body[0] = nil
+	resp.resp_body[1] = nil
+	resp.headers = nil
+	resp.trailers = nil
+	resp.direct_response = 0
+	resp.need_async = 0
+}
+
+//export freeReqAndResp
+func freeReqAndResp(req *C.Request, resp *C.Response) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.DefaultLogger.Errorf("[golang_extention] freeReqAndResp() panic %v\n%s", r, string(debug.Stack()))
+		}
+	}()
+
+	if req == nil || resp == nil {
+		return
+	}
+
+	// free header
+	freeCharPointer(req.headers)
+	freeCharPointerArray(resp.headers)
+
+	// free trailer
+	freeCharPointer(req.trailers)
+	freeCharPointerArray(resp.trailers)
+
+	// free body when direct response
+	if resp.resp_body[0] != nil {
+		C.free(unsafe.Pointer(resp.resp_body[0]))
+	}
+}
+
+//export runReceiveStreamFilter
+func runReceiveStreamFilter(req C.Request) C.Response {
+	defer func() {
+		if r := recover(); r != nil {
+			log.DefaultLogger.Errorf("[golang_extention] runReceiveStreamFilter() panic %v\n%s", r, string(debug.Stack()))
+		}
+	}()
+
+	// headers
+	requestHeader := createStreamHeaderorTrailer(req.headers)
+
+	// body
+	var data string
+	if req.req_body[0] != nil && req.req_body[1] != nil {
+		data = dataToString(req.req_body[0], req.req_body[1])
+	}
+
+	// trailers
+	requestTrailer := createStreamHeaderorTrailer(req.trailers)
+
+	// create stream
+	streamManager := stream.GetStreamManager()
+	sm, _ := streamManager.GetOrCreateStreamByID(uint64(req.sid))
+
+	handler := func() {
+		sm.InitResuestStream(&requestHeader, buffer.NewIoBufferString(data), &requestTrailer)
+		sm.SetConnectionID(uint64(req.cid))
+		sm.SetStreamID(uint64(req.sid))
+
+		sm.OnReceive(sm.GetRequestHeaders(), sm.GetRequestData(), sm.GetRequestTrailers())
+	}
+
+	needAsync := stream.GetFilterAsyncMod()
+	if needAsync {
+		// deep copy some memory of request stream member
+		// avoid using an invalid pointer in Go when the host terminates prematurely.
+		sm.DirectDeepCopyRequestStream()
+		utils.GoWithRecover(func() {
+			handler()
+			postDecode(req.filter, sm)
+		}, nil)
+
+	} else {
+		handler()
+	}
+
+	return convertCRequest(sm, needAsync)
+}
+
+//export runSendStreamFilter
+func runSendStreamFilter(resp C.Request) C.Response {
+	defer func() {
+		if r := recover(); r != nil {
+			log.DefaultLogger.Errorf("[golang_extention] runSendStreamFilter() panic %v\n%s", r, string(debug.Stack()))
+		}
+	}()
+
+	// headers
+	requestHeader := createStreamHeaderorTrailer(resp.headers)
+
+	// body
+	var data string
+	if resp.req_body[0] != nil && resp.req_body[1] != nil {
+		data = dataToString(resp.req_body[0], resp.req_body[1])
+	}
+
+	// trailers
+	requestTrailer := createStreamHeaderorTrailer(resp.trailers)
+
+	// stream
+	streamManager := stream.GetStreamManager()
+	sm, _ := streamManager.GetOrCreateStreamByID(uint64(resp.sid))
+	handler := func() {
+		sm.InitResponseStream(&requestHeader, buffer.NewIoBufferString(data), &requestTrailer)
+		//sm.SetConnectionID(uint64(resp.cid))
+		//sm.SetStreamID(uint64(resp.sid))
+
+		sm.OnSend(sm.GetResponseHeaders(), sm.GetResponseData(), sm.GetResponseTrailers())
+	}
+
+	needAsync := stream.GetFilterAsyncMod()
+	if needAsync {
+		// deep copy some memory of response stream member
+		// avoid using an invalid pointer in Go when the host terminates prematurely.
+		sm.DirectDeepCopyResponseStream()
+		utils.GoWithRecover(func() {
+			handler()
+			postEncode(resp.filter, sm)
+		}, nil)
+
+	} else {
+		handler()
+	}
+
+	return convertCResponse(sm, needAsync)
+}
+
+//export cancelPostcallback
+func cancelPostcallback(streamID C.ulonglong) {
+	streamManager := stream.GetStreamManager()
+	sm, _ := streamManager.GetOrCreateStreamByID(uint64(streamID))
+
+	sm.Lock()
+	defer sm.Unlock()
+	sm.ResetStream(stream.StreamRemoteReset)
+}
+
+//export destoryStream
+func destoryStream(streamID C.ulonglong) {
+	streamManager := stream.GetStreamManager()
+	streamManager.DestoryStreamByID(uint64(streamID))
+}
 
 func dataToString(data *C.char, lenPointer *C.char) string {
 	var s0 string
@@ -129,54 +296,6 @@ func freeCharPointer(p **C.char) {
 	C.free(unsafe.Pointer(p))
 }
 
-//export initReqAndResp
-func initReqAndResp(req *C.Request, resp *C.Response, headerLen C.size_t, trailerLen C.size_t) {
-	defer func() {
-		if r := recover(); r != nil {
-			log.DefaultLogger.Errorf("[golang_extention] initReqAndResp() panic %v\n%s", r, string(debug.Stack()))
-		}
-	}()
-
-	// headers -> |key-data|key-len|val-data|val-len|null|
-	req.headers = (**C.char)(C.calloc(C.size_t(4*headerLen+1), C.size_t(pointerSize)))
-	req.trailers = (**C.char)(C.calloc(C.size_t(4*trailerLen+1), C.size_t(pointerSize)))
-	// req_body[0] save request body pointer, req_body[1] save request body length
-	req.req_body[0] = nil
-	req.req_body[1] = nil
-	// resp_body[0] save response body pointer, resp_body[1] save response body length
-	resp.resp_body[0] = nil
-	resp.resp_body[1] = nil
-	resp.headers = nil
-	resp.trailers = nil
-	resp.direct_response = 0
-}
-
-//export freeReqAndResp
-func freeReqAndResp(req *C.Request, resp *C.Response) {
-	defer func() {
-		if r := recover(); r != nil {
-			log.DefaultLogger.Errorf("[golang_extention] freeReqAndResp() panic %v\n%s", r, string(debug.Stack()))
-		}
-	}()
-
-	if req == nil || resp == nil {
-		return
-	}
-
-	// free header
-	freeCharPointer(req.headers)
-	freeCharPointerArray(resp.headers)
-
-	// free trailer
-	freeCharPointer(req.trailers)
-	freeCharPointerArray(resp.trailers)
-
-	// free body when direct response
-	if resp.resp_body[0] != nil {
-		C.free(unsafe.Pointer(resp.resp_body[0]))
-	}
-}
-
 func createStreamHeaderorTrailer(headers **C.char) stream.Headers {
 	header := make(map[string]string)
 	update := make(map[string]string)
@@ -193,76 +312,7 @@ func createStreamHeaderorTrailer(headers **C.char) stream.Headers {
 	}
 }
 
-//export runReceiveStreamFilter
-func runReceiveStreamFilter(req C.Request) C.Response {
-	defer func() {
-		if r := recover(); r != nil {
-			log.DefaultLogger.Errorf("[golang_extention] runReceiveStreamFilter() panic %v\n%s", r, string(debug.Stack()))
-		}
-	}()
-
-	// headers
-	requestHeader := createStreamHeaderorTrailer(req.headers)
-
-	// body
-	var data string
-	if req.req_body[0] != nil && req.req_body[1] != nil {
-		data = dataToString(req.req_body[0], req.req_body[1])
-	}
-
-	// trailers
-	requestTrailer := createStreamHeaderorTrailer(req.trailers)
-
-	// TODO init filter manager after support stream id
-	// create stream
-	sm := stream.CreateActiveStream(context.TODO())
-	sm.InitResuestStream(&requestHeader, buffer.NewIoBufferString(data), &requestTrailer)
-	sm.SetConnectionID(uint64(req.cid))
-	sm.SetStreamID(uint64(req.sid))
-
-	fm := stream.CreateStreamFilter(context.TODO(), stream.DefaultFilterChainName)
-	fm.SetReceiveFilterHandler(&sm)
-
-	fm.RunReceiverFilter(context.TODO(), api.BeforeRoute, sm.GetRequestHeaders(), sm.GetRequestData(), sm.GetRequestTrailers(), nil)
-	sm.SetCurrentReveivePhase(api.BeforeRoute)
-
-	stream.DestoryStreamFilter(fm)
-
-	return convertCRequest(sm)
-}
-
-//export runSendStreamFilter
-func runSendStreamFilter(resp C.Request) C.Response {
-	defer func() {
-		if r := recover(); r != nil {
-			log.DefaultLogger.Errorf("[golang_extention] runSendStreamFilter() panic %v\n%s", r, string(debug.Stack()))
-		}
-	}()
-
-	// headers
-	requestHeader := createStreamHeaderorTrailer(resp.headers)
-
-	// TODO support GetorCreateActive by stream id
-	sm := stream.CreateActiveStream(context.TODO())
-	var data string
-	if resp.req_body[0] != nil && resp.req_body[1] != nil {
-		data = dataToString(resp.req_body[0], resp.req_body[1])
-	}
-
-	// trailers
-	requestTrailer := createStreamHeaderorTrailer(resp.trailers)
-
-	sm.InitResponseStream(&requestHeader, buffer.NewIoBufferString(data), &requestTrailer)
-
-	fm := stream.CreateStreamFilter(context.TODO(), stream.DefaultFilterChainName)
-	fm.SetSenderFilterHandler(&sm)
-	fm.RunSenderFilter(context.TODO(), api.BeforeSend, sm.GetResponseHeaders(), sm.GetResponseData(), sm.GetResponseTrailers(), nil)
-	stream.DestoryStreamFilter(fm)
-
-	return convertCResponse(sm)
-}
-
-func convertCRequest(sm stream.ActiveStream) C.Response {
+func generateRequest(sm *stream.ActiveStream) C.Response {
 	var resp C.Response
 
 	if sm.IsDirectResponse() {
@@ -282,7 +332,7 @@ func convertCRequest(sm stream.ActiveStream) C.Response {
 	return resp
 }
 
-func convertCResponse(sm stream.ActiveStream) C.Response {
+func generateResponse(sm *stream.ActiveStream) C.Response {
 	var resp C.Response
 
 	if sm.IsDirectResponse() {
@@ -300,4 +350,56 @@ func convertCResponse(sm stream.ActiveStream) C.Response {
 	rangeMapToChar(sm.GetResponseUpdatedHeaders(), &resp.headers)
 
 	return resp
+}
+
+func postDecode(filter unsafe.Pointer, sm *stream.ActiveStream) {
+	sm.RLock()
+	defer sm.RUnlock()
+	if !sm.CheckStreamValid() || postDecodePointer == nil {
+		return
+	}
+
+	C.runPostCallback(postDecodePointer, filter, generateRequest(sm))
+}
+
+func postEncode(filter unsafe.Pointer, sm *stream.ActiveStream) {
+	sm.RLock()
+	defer sm.RUnlock()
+	if !sm.CheckStreamValid() || postEncodePointer == nil {
+		return
+	}
+
+	C.runPostCallback(postEncodePointer, filter, generateResponse(sm))
+}
+
+func convertCRequest(sm *stream.ActiveStream, needAsync bool) C.Response {
+	var resp C.Response
+
+	if needAsync {
+		resp.need_async = 1
+		resp.resp_body[0] = nil
+		resp.resp_body[1] = nil
+		resp.headers = nil
+		resp.trailers = nil
+		resp.direct_response = 0
+		return resp
+	}
+
+	return generateRequest(sm)
+}
+
+func convertCResponse(sm *stream.ActiveStream, needAsync bool) C.Response {
+	var resp C.Response
+
+	if needAsync {
+		resp.need_async = 1
+		resp.resp_body[0] = nil
+		resp.resp_body[1] = nil
+		resp.headers = nil
+		resp.trailers = nil
+		resp.direct_response = 0
+		return resp
+	}
+
+	return generateResponse(sm)
 }

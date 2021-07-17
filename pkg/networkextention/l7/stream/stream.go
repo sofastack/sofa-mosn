@@ -19,7 +19,10 @@ package stream
 
 import (
 	"context"
+	"errors"
 	"net/http"
+	"sync"
+	"sync/atomic"
 
 	"mosn.io/api"
 	"mosn.io/mosn/pkg/protocol"
@@ -28,7 +31,80 @@ import (
 	"mosn.io/pkg/buffer"
 )
 
+const (
+	streamStateConnected uint32 = iota
+	streamStateReset
+	streamStateDestroyed
+)
+
+// StreamResetReason defines the reason why stream reset
+type StreamResetReason string
+
+// Group of stream reset reasons
+const (
+	StreamRemoteReset StreamResetReason = "StreamRemoteReset"
+	StreamDestroy     StreamResetReason = "StreamDestroy"
+)
+
+var streamManagerInstance *StreamManager = &StreamManager{}
+
+// GetStreamFilterManager return a global singleton of StreamFilterManager.
+func GetStreamManager() *StreamManager {
+	return streamManagerInstance
+}
+
+// StreamManager is used to manage stream
+type StreamManager struct {
+	streamManagerMap sync.Map
+}
+
+// GetStreamFilterFactory return StreamFilterFactory indexed by sid.
+func (s *StreamManager) GetOrCreateStreamByID(sid uint64) (*ActiveStream, error) {
+	stream, err := s.GetStreamByID(sid)
+	if err == nil {
+		return stream, nil
+	} else {
+		v, _ := s.streamManagerMap.LoadOrStore(sid, CreateActiveStream(context.TODO()))
+		stream, ok := v.(*ActiveStream)
+		if !ok {
+			return nil, errors.New("[GetOrCreateStreamByID] get stream failed")
+		}
+
+		return stream, nil
+	}
+}
+
+// DestoryStreamByID delete stream.
+func (s *StreamManager) DestoryStreamByID(sid uint64) {
+	stream, err := s.GetStreamByID(sid)
+	if err != nil {
+		return
+	}
+
+	s.streamManagerMap.Delete(sid)
+	stream.ResetStream(StreamDestroy)
+	stream.Destory()
+}
+
+func (s *StreamManager) GetStreamByID(sid uint64) (*ActiveStream, error) {
+	if v, ok := s.streamManagerMap.Load(sid); ok {
+		stream, ok := v.(*ActiveStream)
+		if !ok {
+			return nil, errors.New("[GetStreamByID] unexpected object in map")
+		}
+
+		return stream, nil
+	}
+
+	return nil, errors.New("[GetStreamByID] get stream failed")
+}
+
+// ActiveStream is a fake stream
 type ActiveStream struct {
+	sync.RWMutex
+
+	state uint32
+
 	// current receive phase
 	currentReceivePhase api.ReceiverFilterPhase
 
@@ -49,6 +125,7 @@ type ActiveStream struct {
 	respDataBuf  types.IoBuffer
 
 	directResponse bool
+	needAsync      bool
 
 	api.StreamReceiverFilterHandler
 	api.StreamSenderFilterHandler
@@ -57,15 +134,23 @@ type ActiveStream struct {
 }
 
 // CreateActiveStream create ActiveStream.
-func CreateActiveStream(ctx context.Context) ActiveStream {
-	return ActiveStream{
+func CreateActiveStream(ctx context.Context) *ActiveStream {
+	sm := &ActiveStream{
 		ctx:            ctx,
+		state:          streamStateConnected,
 		directResponse: false,
 		reqHeaders:     &Headers{},
 		reqTrailers:    &Headers{},
 		respHeaders:    &Headers{},
 		respTrailers:   &Headers{},
+		// TODO dynamic set filter chain name
+		fm: CreateStreamFilter(ctx, DefaultFilterChainName),
 	}
+
+	sm.fm.SetReceiveFilterHandler(sm)
+	sm.fm.SetSenderFilterHandler(sm)
+
+	return sm
 }
 
 // InitResuestStream init request stream.
@@ -80,6 +165,93 @@ func (s *ActiveStream) InitResponseStream(headers *Headers, data types.IoBuffer,
 	s.respHeaders = headers
 	s.respDataBuf = data
 	s.respTrailers = trailers
+	// reset directResponse flag for response
+	s.directResponse = false
+	// reset needAsync flag for response
+	s.needAsync = false
+}
+
+// DirectDeepCopyRequestStream used to deep copy some request member for async.
+func (s *ActiveStream) DirectDeepCopyRequestStream() {
+	s.respHeaders.DirectDeepCopyKeyValue()
+	s.reqTrailers.DirectDeepCopyKeyValue()
+	s.reqDataBuf = s.reqDataBuf.Clone()
+}
+
+// DirectDeepCopyResponseStream used to deep copy some response member for async.
+func (s *ActiveStream) DirectDeepCopyResponseStream() {
+	s.respHeaders.DirectDeepCopyKeyValue()
+	s.respTrailers.DirectDeepCopyKeyValue()
+	s.respDataBuf = s.respDataBuf.Clone()
+}
+
+// FilterSyncCheck is used to check whether the filter has sync operation.
+type FilterSyncCheck interface {
+	CheckHasSync(context.Context, types.HeaderMap, types.IoBuffer, types.HeaderMap) bool
+}
+
+// check receive filters need sync operation.
+func (s *ActiveStream) receiveFilterAsyncCheck(ctx context.Context, headers types.HeaderMap, data types.IoBuffer, trailers types.HeaderMap, filter api.StreamReceiverFilter) {
+	if ck, ok := filter.(FilterSyncCheck); ok {
+		if ck.CheckHasSync(ctx, headers, data, trailers) {
+			s.needAsync = true
+		}
+	}
+}
+
+// check send filters need sync operation.
+func (s *ActiveStream) sendFilterAsyncCheck(ctx context.Context, headers types.HeaderMap, data types.IoBuffer, trailers types.HeaderMap, filter api.StreamSenderFilter) {
+	if ck, ok := filter.(FilterSyncCheck); ok {
+		if ck.CheckHasSync(ctx, headers, data, trailers) {
+			s.needAsync = true
+		}
+	}
+}
+
+// CheckReceiveFilterNeedAsync is used to check receive filter need async mode.
+func (s *ActiveStream) CheckReceiveFilterNeedAsync() bool {
+	s.fm.RangeReceiverFilter(s.GetStreamContext(), s.GetRequestHeaders(), s.GetRequestData(), s.GetRequestTrailers(), s.receiveFilterAsyncCheck)
+	return s.NeedAsync()
+}
+
+// CheckSendFilterNeedAsync is used to check send filter need async mode.
+func (s *ActiveStream) CheckSendFilterNeedAsync() bool {
+	s.fm.RangeSenderFilter(s.GetStreamContext(), s.GetResponseHeaders(), s.GetResponseData(), s.GetResponseTrailers(), s.sendFilterAsyncCheck)
+	return s.NeedAsync()
+}
+
+// OnReceive is used to run receive filters.
+func (s *ActiveStream) OnReceive(headers api.HeaderMap, buf buffer.IoBuffer, trailers api.HeaderMap) {
+	s.SetCurrentReveivePhase(api.BeforeRoute)
+	s.fm.RunReceiverFilter(s.ctx, api.BeforeRoute, headers, buf, trailers, nil)
+}
+
+// OnSend is used to run send filters.
+func (s *ActiveStream) OnSend(headers api.HeaderMap, buf buffer.IoBuffer, trailers api.HeaderMap) {
+	s.fm.RunSenderFilter(s.ctx, api.BeforeSend, headers, buf, trailers, nil)
+}
+
+// Destory is used to destory current stream.
+func (s *ActiveStream) Destory() {
+	// call filter destroy handler
+	s.fm.OnDestroy()
+	DestoryStreamFilter(s.fm)
+	//TODO reuse stream
+}
+
+// ResetStream is used to reset stream.
+func (s *ActiveStream) ResetStream(reason StreamResetReason) {
+	switch reason {
+	case StreamRemoteReset:
+		atomic.StoreUint32(&s.state, streamStateReset)
+	case StreamDestroy:
+		atomic.StoreUint32(&s.state, streamStateDestroyed)
+	}
+}
+
+// CheckStream check whether the stream is valid.
+func (s *ActiveStream) CheckStreamValid() bool {
+	return atomic.LoadUint32(&s.state) == streamStateConnected
 }
 
 // SetCurrentReveivePhase set current reveive phase.
@@ -92,9 +264,19 @@ func (s *ActiveStream) IsDirectResponse() bool {
 	return s.directResponse
 }
 
+// NeedAsync check whether it is need async operation.
+func (s *ActiveStream) NeedAsync() bool {
+	return s.needAsync
+}
+
 // GetResponseCode get response status code.
 func (s *ActiveStream) GetResponseCode() int {
 	return s.code
+}
+
+// GetStreamContext get stream context.
+func (s *ActiveStream) GetStreamContext() context.Context {
+	return s.ctx
 }
 
 // SetConnectionID is set connection id.

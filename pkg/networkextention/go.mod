@@ -3,13 +3,14 @@ module mosn.io/mosn/pkg/networkextention
 go 1.12
 
 require (
+	bou.ke/monkey v1.0.2 // indirect
 	github.com/fsnotify/fsnotify v1.4.10-0.20200417215612-7f4cf4dd2b52
 	github.com/hashicorp/go-hclog v0.9.1 // indirect
 	github.com/hashicorp/yamux v0.0.0-20181012175058-2f1d1f20f75d // indirect
 	github.com/mitchellh/go-testing-interface v1.0.0 // indirect
-	mosn.io/api v0.0.0-20210204052134-5b9a826795fd
-	mosn.io/mosn v0.0.0-20210210041606-f44566f58cb5
-	mosn.io/pkg v0.0.0-20210204111127-5f869b58611d
+	mosn.io/api v0.0.0-20210414070543-8a0686b03540
+	mosn.io/mosn v0.0.0-20210520090151-a350385e8e63
+	mosn.io/pkg v0.0.0-20210401090620-f0e0d1a3efce
 )
 
 replace (

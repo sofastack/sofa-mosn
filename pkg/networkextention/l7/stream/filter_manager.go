@@ -19,6 +19,7 @@ package stream
 
 import (
 	"context"
+	"os"
 
 	"mosn.io/mosn/pkg/streamfilter"
 )
@@ -26,7 +27,30 @@ import (
 const (
 	// TODO using mapping port stuct to dynamic get
 	DefaultFilterChainName string = "2990"
+
+	AsyncEnvName string = "ENABLEMOEASYNCMOD"
 )
+
+var enableFilterAsyncMode bool
+
+func init() {
+	parseFilterAsyncMod(AsyncEnvName)
+}
+
+// TODO support auto config
+func parseFilterAsyncMod(envName string) {
+	enableFilterAsyncMode = false
+	asyncEnable := os.Getenv(envName)
+	if asyncEnable != "" {
+		enableFilterAsyncMode = true
+	}
+}
+
+// TODO remove it or as a global switch for check async?
+// GetFilterAsyncMod is check filter enables asynchronous running mode.
+func GetFilterAsyncMod() bool {
+	return enableFilterAsyncMode
+}
 
 func AddOrUpdateFilter(filterChainName string, streamFiltersConfig streamfilter.StreamFiltersConfig) {
 	streamfilter.GetStreamFilterManager().AddOrUpdateStreamFilterConfig(filterChainName, streamFiltersConfig)

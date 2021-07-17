@@ -25,7 +25,6 @@ import (
 	"mosn.io/mosn/pkg/configmanager"
 	mlog "mosn.io/mosn/pkg/log"
 	"mosn.io/mosn/pkg/network"
-	"mosn.io/mosn/pkg/server/keeper"
 	"mosn.io/mosn/pkg/types"
 	"mosn.io/pkg/buffer"
 	"mosn.io/pkg/log"
@@ -74,8 +73,6 @@ func NewServer(config *Config, cmFilter types.ClusterManagerFilter, clMng types.
 			log.DefaultLogger.Infof("[server] [reconfigure] [new server] Netpoll mode enabled.")
 		}
 	}
-
-	keeper.OnProcessShutDown(log.CloseAll)
 
 	server := &server{
 		serverName: config.ServerName,

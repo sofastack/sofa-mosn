@@ -26,6 +26,7 @@ import (
 	_ "mosn.io/mosn/pkg/filter/network/connectionmanager"
 	_ "mosn.io/mosn/pkg/filter/network/proxy"
 	"mosn.io/mosn/pkg/router"
+	logger "mosn.io/pkg/log"
 )
 
 // test compatible
@@ -198,6 +199,9 @@ func TestNewMosn(t *testing.T) {
 
 		// start mosn
 		m.Start()
+		time.Sleep(time.Second * 3)
+		//go test must ClearAll logger because they're going to disrupt other unit tests;  more #1654
+		logger.ClearAll()
 		time.Sleep(time.Second * 3)
 		// stop mosn
 		m.Close()

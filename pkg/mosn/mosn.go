@@ -18,6 +18,7 @@
 package mosn
 
 import (
+	logger "mosn.io/pkg/log"
 	"net"
 	"sync"
 	"time"
@@ -339,6 +340,9 @@ func (m *Mosn) Close() {
 	if m.Clustermanager != nil {
 		m.Clustermanager.Destroy()
 	}
+	logger.CloseAll()
+	// TODO: It does not guarantee that the log is completely written to disk in 2 seconds
+	time.Sleep(2 * time.Second)
 	m.wg.Done()
 
 }
